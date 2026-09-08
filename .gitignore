@@ -3,3 +3,8 @@ __pycache__/
 .venv/
 .Rhistory
 .RData
+# GOBNILP writes/needs these in src/ at runtime -- generated, not source
+src/*.bnsl
+src/adjmat.*
+src/pdagadjmat.*
+src/bi.mat
