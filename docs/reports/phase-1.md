@@ -1,5 +1,10 @@
 # Baseline reproduction notes (Phase 1)
 
+> **Note (2026-11-15).** This file was `docs/baseline_reproduction_notes.md` until step 1.5.0a;
+> it was moved here unchanged. Jirka has seen the original, so mistakes are fixed with dated
+> **Correction** notes placed next to the original text, never by rewriting it. Each
+> correction is explained in `docs/reports/1.5.0a.md`.
+
 ## Reproducibility details
 - Python: 3.14.4
 - pandas: 3.0.5
@@ -61,6 +66,11 @@ two, they'll give the same *ranking* but look like different numbers).
 - `bn-project` and the GitHub repo `bayesian-network-learning` are the same
   repo -- the local folder name just doesn't match the GitHub repo name.
   That's fine and doesn't need fixing, Git doesn't care about folder names.
+
+  > **Correction (2026-11-15):** the GitHub repo is
+  > `p-anika/bn-joint-structure-cpt-learning` (checked with `git remote -v`), not
+  > `bayesian-network-learning`. `bayesian-network-learning` was an earlier prototype repo.
+  > The local folder `bn-project` and the GitHub name still differ, which is harmless.
 - GOBNILP wasn't on PATH after building it -- fixed by symlinking the built
   binary into `~/.local/bin/gobnilp` and adding that folder to PATH in
   `~/.bashrc`.
@@ -93,6 +103,11 @@ with a "less data = less negative log-likelihood penalty" effect. This is a
 hypothesis, not a confirmed explanation -- worth asking Jirka directly
 rather than assuming it's settled.
 
+> **Correction (2026-11-15):** confirmed. Jirka wrote on Sep 28, 2026: "I can confirm that the
+> BIC, number of parameters and log-likelihood in Figure 4 come from the 10-fold
+> cross-validation." So the Figure 4 numbers and our full-data −64837.74 are not directly
+> comparable. (The 0.9 ratio above is still only a rough consistency check, not a derivation.)
+
 **Structural note:** my learned graph has exactly one variable with zero
 parents (D11). Interestingly, the paper's own structure (their Table 2/8)
 also has exactly one zero-parent variable, though it's a different one
@@ -121,6 +136,16 @@ overall split isn't surprising. Step 1.6 (the `bnlearn` cross-check) helped
 pin down how much of this gap is "different structure" vs. something else
 (see below).
 
+> **Correction (2026-11-15):** the split was 10/30/4 because of a tie-breaking bug, not only
+> because of the structure. Six nodes with 0 or 1 parents (a13, a15, d6, d11, d12, d13) were
+> labelled MLR even though their STD and MLR scores in `results/cpt-type-summary.csv` differ
+> by at most 4.5e-13, which is floating-point noise (see the "quirk" section below). The script
+> picked whichever number happened to be larger. Under the project's tie rule (scores within
+> 1e-6 are tied; ties go to STD, then OLR, then MLR), those six become STD. Applying that rule
+> to the existing CSV gives **16 STD, 24 MLR, 4 OLR**. The official corrected split comes from
+> re-running the fixed script in step 1.5.1; see `docs/reports/1.5.1.md`. The remaining gap to
+> the paper's 19/22/3 is what step 1.5.2 (fitting on the hc structure) tests.
+
 ## An important quirk I noticed: STD and MLR sometimes tie exactly
 Look at the raw fit_cpt_types.py output for any node with **1 or fewer
 parents** -- e.g. `a3: STD=-1142.51 MLR=-1142.51`. This isn't a coincidence
@@ -148,11 +173,28 @@ consistent with the paper's own finding (and mine): every multi-parent
 winner was MLR or OLR, never STD -- because STD can only ever *tie* MLR
 for small families, never actually beat it.
 
+> **Correction (2026-11-15):** two fixes to this paragraph.
+> 1. *The unfinished sentence.* With k = 3 states and n = 2 parents, STD has
+>    (k−1)·k^n = 2·9 = **18** parameters and MLR has (k−1)·(1 + n(k−1)) = 2·5 = **10**
+>    (paper eq. 6 and 12). So for 2+ parents MLR is a restricted model with fewer parameters,
+>    not just the table written differently. That part of the paragraph was right.
+> 2. *"STD can only ever tie MLR, never beat it" is wrong for 2+ parents.* STD is the most
+>    flexible model for a given parent set, so its log-likelihood is always **at least** MLR's.
+>    BIC also subtracts a penalty, and STD's is larger (18 vs 10 parameters). STD therefore wins
+>    when its better fit outweighs the extra penalty, for example when the two parents have a
+>    strong *interaction* (their combined effect isn't the sum of their separate effects), which
+>    MLR can't represent. In this data that simply didn't happen. The *observation* is correct:
+>    no 2-parent node chose STD, in our run or in the paper's Table 2
+>    (`data/reference/kybernetika-table2.csv`). The *reason* is the data, not a mathematical rule.
+
 ## Multi-parent nodes: did all of them use MLR/OLR?
 Yes, matching the paper's claim exactly: scanning every 2-parent family in
 my result, none of them picked STD as the winner -- all went to MLR or
 OLR. All 10 of my STD winners have 0 or 1 parent, same pattern the paper
 reports for its own STD winners.
+
+> **Correction (2026-11-15):** all 10 STD winners have exactly **1** parent. The only 0-parent
+> node, d11, was labelled MLR because of the tie bug described above.
 
 ## Max parent count sanity check
 Paper's final structure: max 2 parents per node (their Table 2).
@@ -235,4 +277,23 @@ this reproduction.
   or correspondence; the max-parent-count match above is a reassuring but
   not conclusive sign these were reasonable choices.
 
+> **Correction (2026-11-15)** to this list:
+> - *Split.* Part of the 23/68/9 vs 43/50/7 gap was the tie-breaking bug (see the correction
+>   in Step 1.4). With the tie rule the existing numbers give 16/24/4 (36/55/9).
+> - *BIC magnitude.* Confirmed by Jirka (Sep 28, 2026): Figure 4 comes from 10-fold
+>   cross-validation.
+> - *Paper's structure.* Confirmed by Jirka (Sep 28, 2026): "The model structure in the
+>   Kybernetika paper was learnt using the hc procedure from the R package bnlearn."
+>   So the paper never used scoring2a's alpha/palim for its structure. alpha = 1 is the true
+>   BIC according to de Campos's note `scoring-how-to-use-it.txt`, and palim = 9 matches
+>   Jirka's own example `script-data24-1`.
+
 ## Phase 1 status: COMPLETE
+
+## Open questions (added 2026-11-15)
+
+- **Possible inconsistency in the paper's text (unverified).** The old Phase 1 plan noted that
+  the Kybernetika paper says "19 standard CPTs" and, in an adjacent sentence, "all 17 standard
+  CPTs correspond to…". This hasn't been re-checked against the PDF (it isn't in the repo).
+  Table 2 (`data/reference/kybernetika-table2.csv`) has 19 STD rows. Worth re-reading before
+  quoting the paper; probably not worth an email question on its own.

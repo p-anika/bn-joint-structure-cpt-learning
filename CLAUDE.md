@@ -22,15 +22,29 @@ unclear, or results suggest the plan should change, stop and ask. Never edit
 `docs/research-plan.md` yourself.
 
 ## How every session runs
-1. **Plan first.** For each requested step write `docs/tasks/<step-id>.md`: goal, inputs,
-   outputs, files to create/change, language, how correctness will be checked, risks.
-   Stop and wait for Anika's approval.
-2. **One step at a time** on a branch `step-<id>` (e.g. `step-1.5.1`). Tests first for any
-   scoring, fitting, structure, or pruning code.
-3. **Stop after each step** with: what changed, headline numbers, and ONE number for Anika to
-   hand-check with exact instructions for checking it.
-4. After approval: complete ALL documentation in the checklist below, run the full test suite,
-   commit (clear message), push, merge to `main`, delete the branch.
+Anika's prompt names one or more steps. Work through them without stopping, except at the
+checkpoints below.
+1. **Task file.** For each step write `docs/tasks/<step-id>.md` (goal, inputs, outputs, files,
+   language, how correctness is checked, risks), then continue. Stop for approval of the plan
+   ONLY if the step deletes or moves files, changes a method or the research plan, or is
+   ambiguous. Otherwise do not wait.
+2. **Do the work.** Tests first for any scoring, fitting, structure, or pruning code.
+3. **Automatic checks instead of manual ones.** Run the full test suite, the expected-value
+   checks stated in the prompt or plan, and `make phase1` (expect -64837.74) whenever pipeline
+   code changed. If ANY result differs from what is expected, or something surprising happens,
+   STOP and report before fixing or continuing. Never "fix" a surprising number without asking.
+4. **Documentation before the checkpoint.** Complete the whole documentation checklist below
+   before stopping, so Anika reviews code, numbers, and docs in one pass.
+5. **One checkpoint at the end of the prompt**: what changed per step, headline numbers vs
+   expected, ONE number for Anika to hand-check with exact instructions, and anything you are
+   unsure about.
+6. **After approval**: commit and update `main` (git rules below).
+
+## Git rules (keep GitHub clean)
+- Work on a LOCAL branch `step-<id>` so an unapproved step can be thrown away. Never push branches.
+- After approval: `git merge --squash` into `main`, ONE commit per step with message
+  `Step <id>: <what was done>`, push `main`, delete the local branch.
+- GitHub should show only `main`, with one clear commit per step.
 
 ## Documentation checklist — required for EVERY step, without being asked
 Documentation is a deliverable, not an extra. A step is not done until all of these are done.
@@ -110,6 +124,14 @@ Rules:
   repo: merge what is still correct into the current docs and delete the rest (git history keeps
   it). Record every deletion in `decision-log.md` with the last commit hash where it existed.
   `docs/research-plan.md` is the only plan.
+- Every tracked file must be intentional: listed in its folder's README with what it is, where it
+  came from, and whether it is an original, a derived file (and which command regenerates it), or
+  a historical record. Derived files that are not needed are deleted; superseded results that were
+  reported to Jirka are kept but marked "superseded by <file>, <date>" in the folder README.
+  At the end of every phase, re-run the inventory check (`git ls-files` vs the READMEs) and report
+  any file that is not documented.
+- `data/raw/` holds Jirka's original files exactly as received, with a README listing each file,
+  the email date it came from, and its SHA-256 checksum. No compiled binaries in git.
 - Never silently rewrite a result that was already reported (to Jirka or in a report). Correct it
   with a dated note, e.g. "Correction (2026-11-20): the split was 10/30/4 because of a tie-breaking
   bug; corrected to 16/24/4, see docs/reports/1.5.1.md."
