@@ -24,3 +24,7 @@ src/gobnilp/
 # Scratch outputs that are never committed, e.g. `make provenance`'s rebuilt copy of
 # BN-data.csv (CLAUDE.md: no regenerated copies of data files in git)
 scratch/
+
+# Paper PDFs: local copies only. Never commit them (public repo; most are copyrighted).
+# Citations live in docs/references.md and docs/references.bib.
+papers/

@@ -8,6 +8,8 @@ of writing the conditional probability table P(v | pa(v)) and compare their BIC:
 
     BIC = LL - (log N / 2) * C                       (paper eq. 7/9; natural log; higher = better)
 
+"The paper" here and below is Vomlel, Kybernetika 2026 (docs/references.md#vomlel2026).
+
 where LL is the maximized log-likelihood on all N rows and C is the number of free parameters.
 With k = 3 states and n parents (CLAUDE.md conventions):
 

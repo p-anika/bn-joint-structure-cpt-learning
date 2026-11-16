@@ -3,7 +3,7 @@
 Learning a Bayesian network's structure and each node's CPT type (STD, MLR or OLR) together,
 with safe pruning rules. Research project with Dr. Jiří Vomlel (UTIA, Prague).
 
-The baseline (Vomlel, Kybernetika 2026) learns the structure with standard tables (STD) and
+The baseline ([Vomlel, Kybernetika 2026](docs/references.md#vomlel2026)) learns the structure with standard tables (STD) and
 only then picks a CPT type per node. This project scores every candidate parent set with
 max(BIC_STD, BIC_MLR, BIC_OLR) and lets GOBNILP find the optimal structure for that joint
 score. The research contribution is new pruning rules that skip parent sets which cannot be
@@ -58,7 +58,9 @@ Files in this folder:
 | `.gitattributes` | Line-ending rules: LF for our files, Jirka's originals untouched |
 
 Not in git: `.venv/` (Python environment), `scratch/` (throwaway outputs such as
-`make provenance`'s rebuilt data copy), `docs/tasks/` (plans for steps awaiting approval).
+`make provenance`'s rebuilt data copy), `docs/tasks/` (plans for steps awaiting approval),
+`papers/` (local PDF copies of papers; never commit them, citations are in
+[`docs/references.md`](docs/references.md)).
 
 Start here if you are new: [`docs/code-guide/ARCHITECTURE.md`](docs/code-guide/ARCHITECTURE.md),
 then [`docs/explainers/README.md`](docs/explainers/README.md).

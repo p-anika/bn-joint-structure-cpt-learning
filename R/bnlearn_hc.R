@@ -1,5 +1,6 @@
 # Learn a network structure with bnlearn's hill-climbing (hc) and BIC, like the Kybernetika
 # paper did (Jirka, Sep 28 email; decision log entries 10 and 19).
+# References: bnlearn = docs/references.md#scutari2010; the paper = docs/references.md#vomlel2026.
 #
 # Input:  data/raw/BN-data.csv (values -1/0/1; each column is treated as a 3-level factor)
 # Output: an adjacency matrix CSV: row = parent, column = child, 1 = arc

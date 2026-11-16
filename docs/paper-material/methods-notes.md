@@ -7,7 +7,7 @@ there when writing the paper. Appended per step; the step is in brackets.
 
 ## Data [Phase 1; verified in 1.5.0b]
 
-We use the data set of Vomlel (Kybernetika 62(3), 2026): 1661 respondents and 44 variables
+We use the data set of Vomlel ([vomlel2026](../references.md#vomlel2026)): 1661 respondents and 44 variables
 (a1–a30, d1–d14), each with three states coded −1, 0, +1. The file was provided by the author
 (`data/raw/BN-data.csv`). It was obtained from the preprocessed survey responses on a 1–7 scale
 by mapping answers 1–3 to −1, 4 to 0 and 5–7 to +1; re-running the author's conversion code on
@@ -20,11 +20,12 @@ Local BIC scores were computed with `scoring2a` (based on GOBNILP's scoring code
 modified by C. P. de Campos), compiled with g++ (`-O2`), with alpha = 1 (the standard
 BIC penalty), a maximum of 9 parents per node, and its built-in pruning enabled: a parent set
 is dropped when one of its subsets scores at least as well, and a parent set and all its
-supersets are skipped by the bound of de Campos and Ji (2011, Theorem 4); the entropy-based
-rules of de Campos et al. (2018) are not part of this program. The score is
+supersets are skipped by the bound of de Campos and Ji ([decampos2011](../references.md#decampos2011), Theorem 4); the
+entropy-based rules of de Campos et al. ([decampos2018](../references.md#decampos2018)) are not part of this program. The score is
 BIC = LL − (log N / 2)·C, with natural logarithms and C = (k − 1)·k^n free parameters for a
 node with n parents, counting all parent configurations. The BIC-optimal directed acyclic graph
-for these local scores was found with GOBNILP (Bitbucket `jamescussens/gobnilp`) using the
+for these local scores was found with GOBNILP ([gobnilp](../references.md#gobnilp); method:
+[cussens2011](../references.md#cussens2011)) using the
 SCIP Optimization Suite (SCIP with the LP solver SoPlex), which solved the problem to a gap of
 0 %.
 
@@ -42,8 +43,8 @@ with BFGS). The type with the highest BIC was selected per node.
 ## Hill-climbing comparison [Phase 1]
 
 For comparison, a structure was learned with the hill-climbing algorithm `hc` of the R
-package bnlearn with the BIC score and default settings, after `set.seed(1)`,
-which is how the structure in the Kybernetika paper was obtained.
+package bnlearn ([scutari2010](../references.md#scutari2010)) with the BIC score and default settings, after `set.seed(1)`,
+which is how the structure in [vomlel2026](../references.md#vomlel2026) was obtained.
 
 ## Reproducibility [1.5.0b]
 

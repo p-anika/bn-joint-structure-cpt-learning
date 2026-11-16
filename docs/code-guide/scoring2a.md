@@ -37,10 +37,8 @@ with a parent of higher index, so each set is generated once.
 
 ## Which pruning rules are implemented (checked 2026-11-15)
 
-Two papers matter. **de Campos & Ji 2011** ("Efficient structure learning of Bayesian networks
-using constraints", JMLR 12:663–689) gives the classic BIC bound (their Theorem 4). **de Campos
-et al. 2018** ("Entropy-based pruning for learning Bayesian networks using BIC", Artificial
-Intelligence; arXiv 1707.06194) restates that bound as its Lemma 3 and as Theorem 1 with the
+Two papers matter. **[de Campos & Ji 2011](../references.md#decampos2011)** gives the classic
+BIC bound (their Theorem 4). **[de Campos et al. 2018](../references.md#decampos2018)** restates that bound as its Lemma 3 and as Theorem 1 with the
 H(X|Π*) term (the same rule, because N·H(X|Π) = −LL(X|Π); "Alg1" in its tables), and adds new
 rules that use the *candidate parent's* entropy. The theorem and algorithm numbers here come from
 Anika's reading of the 2018 paper (2026-11-15); this guide checks only which rules the code
@@ -91,12 +89,13 @@ with the paper's statement:
 
 This bound uses two facts about STD: the penalty grows with every added parent, and LL ≤ 0. The
 joint score max(BIC_STD, BIC_MLR, BIC_OLR) has much smaller MLR/OLR penalties, so the same bound
-is far weaker for it, which is the open problem of IJAR 2023 Sec. 5.
+is far weaker for it, which is the open problem of [IJAR 2023](../references.md#vomlel2023) Sec. 5.
 
 ### Open question (for Email #3)
 
 Jirka's Jul 3 email says the scoring script is "based on the pruning approach in de Campos et
-al., 'Entropy-based Pruning for Learning Bayesian Networks using BIC'". The copy in his Jul 8
+al., 'Entropy-based Pruning for Learning Bayesian Networks using BIC'"
+([decampos2018](../references.md#decampos2018)). The copy in his Jul 8
 zip (dated 22 Sept 2014 in its header) implements only the subset filter and the de Campos & Ji
 bound, which the 2018 paper restates as Lemma 3 / Alg1; none of its new entropy-based rules
 (Alg2, Alg4) or Theorem 3 are in it. Is there a newer version of the script with those rules,

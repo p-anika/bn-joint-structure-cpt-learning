@@ -100,8 +100,11 @@ R/                   R scripts (bnlearn, CPDAGs, inference)
 tools/scoring2a/     de Campos's scoring2a.c + build notes; tools/gobnilp/gobnilp.set
 tests/               pytest tests mirroring src/bnjoint
 results/<experiment>/  outputs; one folder per experiment, never overwritten silently
-docs/                research-plan, setup, logs, code-guide/, explainers/, reports/,
-                     theory/, reading-notes/, paper-material/   (tasks/ = git-ignored scratch)
+docs/                research-plan, setup, logs, references.md + references.bib, code-guide/,
+                     explainers/, reports/, theory/, reading-notes/, paper-material/
+                     (tasks/ = git-ignored scratch)
+papers/              local PDF copies of papers. Git-ignored, local only: NEVER commit (public
+                     repo, copyrighted). Cite via docs/references.md.
 ```
 Rules:
 - Reusable logic lives in `src/bnjoint/`, never copy-pasted between scripts. One copy of the

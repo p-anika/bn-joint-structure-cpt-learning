@@ -30,7 +30,7 @@ flowchart TD
 In words: the data is converted to scoring2a's format; scoring2a computes the BIC of every
 candidate parent set (assuming STD tables); GOBNILP picks the best-scoring acyclic network
 from those scores; the Python code then re-scores each chosen family with STD, MLR and OLR
-and picks a type per node (the "two-stage" method of the Kybernetika paper). Separately,
+and picks a type per node (the "two-stage" method of the [Kybernetika paper](../references.md#vomlel2026)). Separately,
 bnlearn's hill-climbing learns the structure the paper used, for comparison.
 
 ## Where things live
