@@ -7,8 +7,8 @@ versions with the same keys are in [`references.bib`](references.bib).
 Local PDF copies live in `papers/` at the repo root. That folder is git-ignored and must never be
 committed: the repo is public and most papers are copyrighted.
 
-**How each entry was verified** (2026-11-15; no internet access was available, so only local
-sources were used). Anything not checked against one of these sources is marked
+**How each entry was verified** (2026-11-15/16; no internet access was available, so only
+local sources were used). Anything not checked against one of these sources is marked
 **Unverified**.
 
 ## Papers
@@ -60,9 +60,11 @@ constraints. *Journal of Machine Learning Research* 12, 2011, pp. 663–689.
 
 - **Use here:** the classic BIC pruning bound (its Theorem 4), which is the rule `scoring2a.c`
   actually implements ([`code-guide/scoring2a.md`](code-guide/scoring2a.md)).
-- **Unverified:** there is no local PDF and no internet access. The details are as given by
-  Anika from [decampos2018](#decampos2018). Co-author's full first name, title, volume and pages
-  still need checking against the JMLR page; no DOI is known.
+- **Verified from:** the JMLR PDF in `papers/` (2026-11-16; first page: "Journal of Machine
+  Learning Research 12 (2011) 663-689", title, authors Cassio P. de Campos and Qiang Ji). The
+  details also match reference [7] of [decampos2018](#decampos2018) (checked by Anika). No DOI is
+  printed on the paper, so none is given. That the bound is its *Theorem 4* comes from
+  [decampos2018](#decampos2018); the theorem itself has not yet been read in the 2011 PDF.
 
 ### cussens2011
 
@@ -74,8 +76,9 @@ James Cussens. Bayesian network learning with cutting planes. In: F. G. Cozman, 
   cites for GOBNILP.
 - **Verified from:** `manual/manual.bib` in the GOBNILP source (`~/tools/gobnilp/`), which
   agrees with [vomlel2026](#vomlel2026) ref. 3.
-- **Unverified:** the Kybernetika reference list gives DOI 10.5771/9780810873834-153 for it.
-  That DOI's prefix is not AUAI Press's and looks wrong, so it is left out until checked.
+- **DOI deliberately left out:** the Kybernetika reference list gives DOI
+  10.5771/9780810873834-153 for it, but that prefix is not AUAI Press's and looks wrong
+  (decided with Anika, 2026-11-16).
 
 ### cussens2017
 
@@ -85,8 +88,9 @@ Intelligence Research* 58, 2017, pp. 185–229.
 
 - **Use here:** the fuller description of GOBNILP's method; cited for GOBNILP in
   [vomlel2023](#vomlel2023) (ref. 6).
-- **Verified from:** [vomlel2023](#vomlel2023)'s reference list only. **Unverified:** DOI (not
-  given there).
+- **Verified from:** reference [6] of [vomlel2023](#vomlel2023) (authors, title, journal,
+  volume, pages, year; confirmed by Anika 2026-11-16). The DOI is deliberately left out (not
+  given there, not checked).
 
 ## Software
 
