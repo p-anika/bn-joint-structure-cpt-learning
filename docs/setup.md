@@ -129,7 +129,7 @@ tools/scoring2a/scoring2a <file>.dat 1 9 prune 0 bic > <file>.scores
 
 - `1` is **alpha**. For BIC it multiplies the penalty, so `1` gives the true BIC.
 - `9` is the maximum number of parents (**palim**).
-- `prune` switches on the safe pruning.
+- `prune` switches on the safe pruning (which rules exactly: `docs/code-guide/scoring2a.md`).
 - `0` is used only by another score type (min-BDeu) and is ignored here.
 - `bic` is the score type.
 

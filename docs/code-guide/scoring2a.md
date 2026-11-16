@@ -3,9 +3,10 @@
 **What it does.** `tools/scoring2a/scoring2a.c` reads a data file and, for every variable
 (the "child"), computes the score of candidate parent sets and writes those worth keeping to
 a `.scores` file. GOBNILP then only chooses among these. The file is based on GOBNILP's own
-scoring code (James Cussens, 2012) and carries a note that Cassio de Campos modified it in
-2014. We do not modify it; this guide is from reading the source (line numbers are for the file
-as committed). Running it: `docs/setup.md` §6.
+scoring code (James Cussens, 2012) and carries a note (line 28) that Cassio de Campos modified
+it on 22 Sept 2014, which is before the entropy-based pruning paper appeared (arXiv 1707.06194,
+2017). We do not modify it; this guide is from reading the source line by line (line numbers
+are for the file as committed). Running it: `docs/setup.md` §6.
 
 ## Inputs and outputs
 
@@ -34,32 +35,72 @@ Parent sets are generated **layer by layer**: first the empty set, then all sets
 then size 2, …, up to palim (9). A set of size n is made by extending a kept set of size n−1
 with a parent of higher index, so each set is generated once.
 
-## The two kinds of pruning (the `if ( pruning )` blocks)
+## Which pruning rules are implemented (checked 2026-11-15)
 
-1. **Not kept, but its supersets still explored** (lines ~886–935). After scoring a set S,
-   the code looks through the already-kept sets that score at least as well. If one of them,
-   T, is a **subset** of S, then S is dropped from the output (`keep = FALSE`): GOBNILP would
-   always prefer T, which has fewer parents and an equal or better score, so S can never be in
-   an optimal network.
-2. **"Exponential" pruning: S and all its supersets** (same block, the `DO_BIC` line ~920).
-   If additionally T's score is greater than −alpha · (log N / 2) · penalty(S), where
-   penalty(S) = (k_child − 1) · Π(arities of S) is S's number of STD parameters, then S is
-   marked `prune = TRUE`: its table is freed and it is **not** added to the subset store
-   (`add_subset`). In the next layer a new set is only scored if *all* its subsets one size
-   smaller are in the store (`check_subset`, lines ~837–862), so every superset of S is skipped
-   without being scored.
+Two papers matter. **de Campos & Ji 2011** ("Efficient structure learning of Bayesian networks
+using constraints", JMLR 12:663–689) gives the classic BIC bound (their Theorem 4). **de Campos
+et al. 2018** ("Entropy-based pruning for learning Bayesian networks using BIC", Artificial
+Intelligence; arXiv 1707.06194) restates that bound as its Lemma 3 and as Theorem 1 with the
+H(X|Π*) term (the same rule, because N·H(X|Π) = −LL(X|Π); "Alg1" in its tables), and adds new
+rules that use the *candidate parent's* entropy. The theorem and algorithm numbers here come from
+Anika's reading of the 2018 paper (2026-11-15); this guide checks only which rules the code
+contains.
 
-The reason (2) is safe, in outline: a superset S′ ⊇ S has at least S's penalty, and its
-log-likelihood is at most 0, so its BIC is at most −(log N / 2) · penalty(S). If T already
-scores higher than that, no superset of S can beat T. This is the BIC bound of de Campos et al.;
-the exact statement and theorem number should be taken from the paper (Artificial
-Intelligence 2018), not from this summary. On the last layer (size = palim) no superset will
-be generated anyway, so only rule (1) applies.
+| Rule | Paper | In `scoring2a.c`? | Where |
+|---|---|---|---|
+| **Subset filter**: drop S if a subset T ⊂ S scores at least as well | 2018, Lemma 1 | **Yes** | lines 897–916, output only if `keep` (929) |
+| **de Campos & Ji bound**: if BIC(T) > −Pen(S) for some T ⊂ S, prune S *and all its supersets* | de Campos & Ji 2011, Thm 4 = 2018 Lemma 3 = 2018 Thm 1 with H(X\|Π*) ("Alg1") | **Yes** (BIC version) | penalty 886–893; test 920–921; effect 948–971 and 837–862 |
+| **Alg2**: Theorem 1 with the candidate parent's conditional entropy H(Y\|Π*) | 2018, Thm 1 | **No** | no entropy is computed anywhere in the file |
+| **Alg4**: bound using H(Y), Theorem 2 with Π′ = ∅ | 2018, Thm 2 | **No** | same |
+| **Alg3** | 2018 | **Not identified**: Anika's summary doesn't describe it. The file contains only the two rules marked "Yes", so Alg3 is implemented only if it is one of those; check in the paper's tables. | — |
+| **Theorem 3**: bound on the maximum number of parents | 2018, Thm 3 | **No** | the only limit is the user's palim: `npa <= min(palim, nvars-1)` (785) |
 
-This is exactly the kind of rule the project needs for MLR/OLR: the STD argument uses the
-fact that the penalty grows with every added parent and LL ≤ 0. The joint score
-max(BIC_STD, BIC_MLR, BIC_OLR) has much smaller MLR/OLR penalties, so the same bound is far
-weaker, which is the open problem of IJAR 2023 Sec. 5.
+### The subset filter, in detail (lines 886–929)
+
+After scoring a new set S (score `skore`), the code walks the list `kept` of already-kept sets
+of this child, which is sorted best score first (`sps_sort`, 506–517; merged after each layer,
+988 onward). It stops at the first kept set that scores *worse* than S (`if ( skore >
+sps_ptr->score ) break;`, 901). Every set before that point scores at least as well as S; if
+one of them, T, is a subset of S (905–915), S gets `keep = FALSE` (916) and is not written to
+the output. GOBNILP would always prefer T, which has fewer parents and an equal or better
+score, so S can't be in an optimal network. An exact tie is dropped, because only a strictly
+higher S score stops the walk.
+
+### The de Campos & Ji bound, in detail (line 920)
+
+`penalty` (886–893) is (r_child − 1) × the product of the parents' arities, the STD parameter
+count of S. When the subset filter fires with subset T, line 920 also tests
+
+    BIC(T) > −alpha · (log N / 2) · penalty(S)          (DO_BIC case; alpha = 1 for us)
+
+If it holds, S is marked `prune = TRUE`: its contingency table is freed (948) and S is **not**
+added to the subset store (`add_subset`, 970–971). A set of the next layer is only scored if
+*all* its subsets one size smaller are in the store (`check_subset`, 837–862), so every
+superset of S is skipped without being scored.
+
+Why it is safe: any superset S′ ⊇ S has at least S's penalty, and its log-likelihood is at most
+0, so BIC(S′) ≤ −(log N / 2) · penalty(S) < BIC(T), and T ⊂ S′. Details of the code compared
+with the paper's statement:
+- the code uses strict `>`, the paper's statement allows equality, so the code prunes slightly
+  less (never more) than the theorem permits;
+- it tests only the first dominating subset it meets, which is the best-scoring one (the list
+  is sorted), so it is the strongest test available;
+- it is skipped on the last layer (`!last_layer`, size = palim), where no supersets would be
+  generated anyway;
+- lines 918 and 922 are the analogous tests for BDeu and AIC, unused by us.
+
+This bound uses two facts about STD: the penalty grows with every added parent, and LL ≤ 0. The
+joint score max(BIC_STD, BIC_MLR, BIC_OLR) has much smaller MLR/OLR penalties, so the same bound
+is far weaker for it, which is the open problem of IJAR 2023 Sec. 5.
+
+### Open question (for Email #3)
+
+Jirka's Jul 3 email says the scoring script is "based on the pruning approach in de Campos et
+al., 'Entropy-based Pruning for Learning Bayesian Networks using BIC'". The copy in his Jul 8
+zip (dated 22 Sept 2014 in its header) implements only the subset filter and the de Campos & Ji
+bound, which the 2018 paper restates as Lemma 3 / Alg1; none of its new entropy-based rules
+(Alg2, Alg4) or Theorem 3 are in it. Is there a newer version of the script with those rules,
+or did "based on" mean that the paper describes the rule this script uses?
 
 ## Helper functions
 

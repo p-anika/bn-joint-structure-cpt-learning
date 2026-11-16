@@ -18,7 +18,10 @@ categorical with k = 3 states.
 
 Local BIC scores were computed with `scoring2a` (based on GOBNILP's scoring code by J. Cussens,
 modified by C. P. de Campos), compiled with g++ (`-O2`), with alpha = 1 (the standard
-BIC penalty), a maximum of 9 parents per node, and its built-in pruning enabled. The score is
+BIC penalty), a maximum of 9 parents per node, and its built-in pruning enabled: a parent set
+is dropped when one of its subsets scores at least as well, and a parent set and all its
+supersets are skipped by the bound of de Campos and Ji (2011, Theorem 4); the entropy-based
+rules of de Campos et al. (2018) are not part of this program. The score is
 BIC = LL − (log N / 2)·C, with natural logarithms and C = (k − 1)·k^n free parameters for a
 node with n parents, counting all parent configurations. The BIC-optimal directed acyclic graph
 for these local scores was found with GOBNILP (Bitbucket `jamescussens/gobnilp`) using the
