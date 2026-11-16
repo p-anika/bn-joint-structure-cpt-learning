@@ -1,0 +1,3 @@
+awk '{ sub("\r$", ""); print }' data24-training-1.dat > data24-training-1-unix.dat 
+./scoring2a data24-training-1-unix.dat 1 9 prune 0 bic > data24-training-1-bic.scores 
+/usr/pkgs/bin/gobnilp data24-training-1-bic.scores > data24-optimal-model-1.txt

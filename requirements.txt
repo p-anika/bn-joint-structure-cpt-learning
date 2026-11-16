@@ -1,0 +1,11 @@
+# Python packages the research code needs, pinned to the exact versions used (Python 3.14.4).
+# Install with:  pip install -r requirements.txt
+# Tools for tests and formatting are in requirements-dev.txt.
+numpy==2.5.1
+pandas==3.0.5
+scipy==1.18.0
+statsmodels==0.14.6
+patsy==1.0.2
+matplotlib==3.11.1
+# our own package, src/bnjoint/, installed in editable mode
+-e .

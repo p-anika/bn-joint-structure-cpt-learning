@@ -1,7 +1,0 @@
-library(bnlearn)
-set.seed(1)
-d <- read.csv("data/BN-data.csv")
-d[] <- lapply(d, as.factor)
-dag <- hc(d, score = "bic")
-print(dag)
-write.csv(amat(dag), "results/bnlearn-hc-dag.csv")

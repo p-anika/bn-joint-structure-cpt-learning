@@ -1,0 +1,29 @@
+# Project metadata for the `bnjoint` package (src/bnjoint/), plus tool settings.
+# `pip install -e .` (included in requirements.txt) makes `import bnjoint` work from any
+# script or test, while still using the code in src/ directly ("editable" install).
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bnjoint"
+version = "0.1.0"
+description = "Joint Bayesian-network structure and CPT-type (STD/MLR/OLR) learning"
+requires-python = ">=3.12"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "scripts", "tests"]
+
+[tool.ruff.lint]
+# E/W: style errors, F: real mistakes (unused names...), I: sorted imports, B: likely bugs
+select = ["E", "W", "F", "I", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# skip the anyio plugin (installed with jupyter, not used here) to avoid a deprecation warning
+addopts = "-p no:anyio"

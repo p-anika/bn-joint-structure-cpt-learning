@@ -1,0 +1,25 @@
+Attached is the code that a student is using to run gobnilp with
+BIC/AIC. To compile, it is enough to do:
+gcc -Wall -O2 -o scoring2 scoring2.c  -lm
+(I have used: 
+g++ -O2 -o scoring2a scoring2a.c -lm 
+)
+
+To run it, there are some extra options in the command line (you can
+see the options by calling the program without parameters). An example
+follows:
+
+./scoring2 test.dat 1 9 prune 0 bic
+(I use:
+./scoring2a test.dat 1 9 prune 0 bic 
+)
+
+The value of alpha (1 in the example) is used as the prior strength
+for BDeu and as a multiplier in the case of BIC/AIC, so if you want
+the true BIC, leave it as 1 (the original bic/aic penalty is
+multiplied by that value). The last but one option is only used by
+min-BDeu, so you may ignore it (leave it as 0 as in the example). The
+9 in the example is the maximum number of parents per node.
+
+Cassio
+

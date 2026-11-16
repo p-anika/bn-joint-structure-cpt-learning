@@ -1,10 +1,26 @@
+# Files git should never track. Why each line is here: see the comment above it.
+
+# Python: the virtual environment, compiled bytecode, tool caches, package build info
+.venv/
 __pycache__/
 *.pyc
-.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# R session files
 .Rhistory
 .RData
-# GOBNILP writes/needs these in src/ at runtime -- generated, not source
-src/*.bnsl
-src/adjmat.*
-src/pdagadjmat.*
-src/bi.mat
+
+# Scratch plans, written only when a step needs approval (CLAUDE.md)
+docs/tasks/
+
+# Compiled programs are built with make, never committed (decision log entry 29)
+tools/scoring2a/scoring2a
+
+# The GOBNILP source and build live in ~/tools/gobnilp/, outside the repo (entry 16)
+src/gobnilp/
+
+# Scratch outputs that are never committed, e.g. `make provenance`'s rebuilt copy of
+# BN-data.csv (CLAUDE.md: no regenerated copies of data files in git)
+scratch/

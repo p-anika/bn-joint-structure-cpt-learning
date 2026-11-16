@@ -24,10 +24,10 @@ unclear, or results suggest the plan should change, stop and ask. Never edit
 ## How every session runs
 Anika's prompt names one or more steps. Work through them without stopping, except at the
 checkpoints below.
-1. **Task file.** For each step write `docs/tasks/<step-id>.md` (goal, inputs, outputs, files,
-   language, how correctness is checked, risks), then continue. Stop for approval of the plan
-   ONLY if the step deletes or moves files, changes a method or the research plan, or is
-   ambiguous. Otherwise do not wait.
+1. **Plan only when approval is needed.** If a step deletes or moves files, changes a method or
+   the research plan, or is ambiguous: write `docs/tasks/<step-id>.md` (what will change, how
+   correctness is checked, risks) and stop for approval. `docs/tasks/` is git-ignored scratch.
+   For every other step, write NO task file. Just do the work; the report records what was done.
 2. **Do the work.** Tests first for any scoring, fitting, structure, or pruning code.
 3. **Automatic checks instead of manual ones.** Run the full test suite, the expected-value
    checks stated in the prompt or plan, and `make phase1` (expect -64837.74) whenever pipeline
@@ -36,8 +36,12 @@ checkpoints below.
 4. **Documentation before the checkpoint.** Complete the whole documentation checklist below
    before stopping, so Anika reviews code, numbers, and docs in one pass.
 5. **One checkpoint at the end of the prompt**: what changed per step, headline numbers vs
-   expected, ONE number for Anika to hand-check with exact instructions, and anything you are
-   unsure about.
+   expected, anything you are unsure about, and ONE independent hand-check, only when the prompt
+   produced a new number. An independent hand-check recomputes a number a different way from the
+   code: from raw counts in a spreadsheet, from the paper, or by reasoning on a small example.
+   Re-reading the CSV you just wrote does not count. Doc-only or reorganization steps need no
+   hand-check; the automatic regression checks cover them.
+   Also list the 1–3 riskiest assumptions in the code (e.g. how parents are coded for OLR).
 6. **After approval**: commit and update `main` (git rules below).
 
 ## Git rules (keep GitHub clean)
@@ -46,39 +50,41 @@ checkpoints below.
   `Step <id>: <what was done>`, push `main`, delete the local branch.
 - GitHub should show only `main`, with one clear commit per step.
 
-## Documentation checklist — required for EVERY step, without being asked
-Documentation is a deliverable, not an extra. A step is not done until all of these are done.
+## Documentation checklist — required for EVERY prompt, without being asked
+Documentation is a deliverable, not an extra. Principle: each fact lives in ONE place and
+everything else links to it. Never copy the same numbers or explanations into several files;
+duplicated docs drift apart and become wrong. Update existing docs rather than adding new ones.
 - [ ] **Docstrings and comments** in every file touched: module docstring (purpose, inputs,
       outputs, how to run, the math with paper equation numbers when known for sure);
       a docstring on every function (arguments, return value, an example); comments on any
-      line a beginner would not understand.
-- [ ] **Code guide** `docs/code-guide/<module-or-script>.md` for every new or changed module or
-      script: (1) what it does in one paragraph, (2) where it fits in the pipeline (inputs come
-      from, outputs go to), (3) a walkthrough of how it works, function by function, in plain
-      language, (4) WHY it is designed this way and what alternatives were rejected,
-      (5) how to run it and what the output looks like, (6) how to change common things safely,
-      (7) links to the relevant explainers.
+      line a beginner would not understand. The detailed "how" lives here, next to the code.
+- [ ] **Code guide**: one per pipeline stage (e.g. `docs/code-guide/phase1-pipeline.md`,
+      `docs/code-guide/cpt-scoring.md`), plus `docs/code-guide/ARCHITECTURE.md` (a map of how all
+      modules and scripts connect). Each guide covers: what the stage does, how data flows through
+      it, a beginner-level walkthrough of the key functions, WHY it is designed this way and what
+      alternatives were rejected, how to run it, and how to change common things safely. Link
+      to docstrings instead of repeating them. Update the guide whenever the code changes.
 - [ ] **Explainer** `docs/explainers/NN-<topic>.md` for every new concept, method, or tool:
       (1) plain-words definition, (2) why it matters in this project, (3) a tiny worked example
       with real numbers from our data, (4) where it appears in the code, (5) common confusions,
       (6) 3–5 "check your understanding" questions with answers at the bottom.
       Update existing explainers instead of duplicating. Keep `docs/explainers/README.md` as an
       ordered index (reading order for a beginner).
-- [ ] **Step report** `docs/reports/<step-id>.md` (1–2 pages): goal, what was done, results with
-      exact numbers, figures/tables produced, surprises, open questions for Anika or Jirka.
+- [ ] **Report**: one per prompt (or per phase), `docs/reports/<id>.md` (1–2 pages): goal, what
+      was done, results with exact numbers and the file each comes from, figures/tables,
+      surprises, open questions for Anika or Jirka. This is THE place results are written up.
 - [ ] **Experiment log** `docs/experiment-log.md`, one row per run that produced a number:
       date | commit hash | exact command | inputs | output folder | headline result | notes.
 - [ ] **Decision log** `docs/decision-log.md`, one entry per choice: date | decision | why |
       alternatives considered | decided by (Anika / Jirka / proposed by Claude, approved by Anika).
 - [ ] **Paper material**:
-      - `docs/paper-claims.md`: claim | evidence file | status (draft / checked by Anika / agreed with Jirka).
+      - `docs/paper-claims.md`: claim | link to the report section with the evidence | status
+        (draft / checked by Anika / agreed with Jirka). Points to reports; does not copy them.
       - `docs/paper-material/methods-notes.md`: append paper-style paragraphs describing exactly
         what was done (data, parameters, software and versions, procedure) so a Methods section
-        can be assembled later.
-      - `docs/paper-material/results-notes.md`: append paper-style paragraphs and tables of
-        results with the file each number came from.
+        can be assembled later. Results are NOT repeated here; they live in the reports.
       - Figures: save as PNG and PDF in `results/<experiment>/figures/`, made by a script so they
-        can be regenerated; record them in the step report.
+        can be regenerated; reference them in the report.
 - [ ] **README updates**: the root `README.md` (how to run each phase) and the README of any
       folder whose contents changed.
 
@@ -94,8 +100,8 @@ R/                   R scripts (bnlearn, CPDAGs, inference)
 tools/scoring2a/     de Campos's scoring2a.c + build notes; tools/gobnilp/gobnilp.set
 tests/               pytest tests mirroring src/bnjoint
 results/<experiment>/  outputs; one folder per experiment, never overwritten silently
-docs/                research-plan, setup, logs, code-guide/, explainers/, reports/, tasks/,
-                     theory/, reading-notes/, paper-material/, archive/
+docs/                research-plan, setup, logs, code-guide/, explainers/, reports/,
+                     theory/, reading-notes/, paper-material/   (tasks/ = git-ignored scratch)
 ```
 Rules:
 - Reusable logic lives in `src/bnjoint/`, never copy-pasted between scripts. One copy of the
@@ -130,6 +136,11 @@ Rules:
   reported to Jirka are kept but marked "superseded by <file>, <date>" in the folder README.
   At the end of every phase, re-run the inventory check (`git ls-files` vs the READMEs) and report
   any file that is not documented.
+- Never commit a regenerated copy of a data file just to prove it matches (e.g. a provenance
+  rebuild of BN-data.csv): write it to a git-ignored scratch location and record the sha256
+  match in a README instead.
+- After a squash-merge, delete that step's file in `docs/tasks/` and remove any empty folders, so
+  the working tree contains only intentional files.
 - `data/raw/` holds Jirka's original files exactly as received, with a README listing each file,
   the email date it came from, and its SHA-256 checksum. No compiled binaries in git.
 - Never silently rewrite a result that was already reported (to Jirka or in a report). Correct it

@@ -4,9 +4,16 @@ One row per run that produced a number. **Commit** is the commit whose code and 
 the number. A row is never edited after the number has been reported; mistakes get a new row
 or a dated note.
 
-Phase 1 runs (Sep 2026) are backfilled in step 1.5.0b, from `docs/reports/phase-1.md` and the
-git history.
+Phase 1 runs (Aug–Sep 2026) were backfilled in step 1.5.0b, from `docs/reports/phase-1.md`
+and the git history. Paths in those rows are the paths at the time.
 
 | Date | Commit | Exact command | Inputs | Output folder | Headline result | Notes |
 |---|---|---|---|---|---|---|
+| 2026-08-18 (backfilled) | `de88a7e` | `gobnilp -f data/data24-training-1-bic-fixed.bnsl` (header added with `add_bnsl_header.sh`, names `0 … 22`) | Jirka's `data24-training-1-bic.scores` | repo root (now `results/test-data24/`) | `adjmat.*`, `pdagadjmat.*` for the 23-variable example | Smoke test only. Objective not recorded at the time; re-run 2026-11-15 gives −3411.597651 and identical adjmat files. |
+| 2026-09-06 (backfilled) | `fd2b479` | `cd src && ./scoring2a ../data/bn-data-44.dat 1 9 prune 0 bic > ../data/bn-data-44-bic.scores`, then `gobnilp -f bn-data-44-bic-fixed.bnsl -s gobnilp.set \| tee ../results/gobnilp-std-run.log` | `data/BN-data.csv` → `bn-data-44.dat` (`convert_data.py`) | `results/` (now `results/phase1/`) | GOBNILP objective **−64837.738627**, 69 arcs, gap 0 % | Commands from the old `run_gobnilp_pipeline.sh` (`8b7b322`). Reported to Jirka. |
+| 2026-09-06 (backfilled) | `fd2b479` | `python scripts/fit_cpt_types.py` | `BN-data.csv`, `gobnilp-std-run.log` | `results/` (now `results/phase1/`) | `cpt-type-summary.csv`: **10 STD / 30 MLR / 4 OLR** | Reported to Jirka. Split affected by the tie bug (see 1.5.0a row; fixed in 1.5.1). |
+| 2026-09-07 (backfilled) | `a53bdd9` | `Rscript scripts/bnlearn_hc.R` | `data/BN-data.csv` | `results/` (now `results/phase1/`) | hc structure: **66 arcs** | `set.seed(1)`; penalization coefficient 3.707588 = log(1661)/2. |
 | 2026-11-15 | `6a38593` | Inline Python check; the full snippet is in `docs/reports/1.5.0a.md` ("How the split was checked") | `results/cpt-type-summary.csv` | none (printed only) | Re-applying the tie rule (within 1e-6; STD, then OLR, then MLR) to the existing scores gives **16 STD / 24 MLR / 4 OLR**. Six nodes change MLR → STD: a13, a15, d6, d11, d12, d13. Largest STD−MLR gap among tied nodes: 4.5e-13. | A re-reading of existing numbers, not a new fit. The official corrected split comes from re-running the fixed script in step 1.5.1. |
+| 2026-11-15 | step 1.5.0b (working tree on `a183df9`; squash commit "Step 1.5.0b") | `Rscript R/convert_jirka_aug5.R` (= `make provenance`) | `data/raw/preprocessed-data.csv`, `data/raw/BN-data.csv` | `scratch/provenance/` (git-ignored); record in `results/data-provenance/README.md` | Jirka's verbatim code reproduces `BN-data.csv` byte for byte; 0 of 73,084 values differ | Provenance check, decision 45 |
+| 2026-11-15 | step 1.5.0b (as above) | `make test-data24` | `data/raw/data24-training-1-bic.scores` | `results/test-data24/` | objective **−3411.597651**; adjmat/pdagadjmat byte-identical to `de88a7e` | GOBNILP run from `~/tools/gobnilp/` |
+| 2026-11-15 | step 1.5.0b (as above) | `make phase1 PROCESSED=<scratch>/processed OUT=<scratch>/phase1` after deleting all derived files and the scoring2a binary | `data/raw/BN-data.csv` | scratch folder (compared, not committed; only the 4 adjmat/pdagadjmat files copied to `results/phase1/`) | objective **−64837.738627**; `.dat`, `.scores`, `.bnsl`, `cpt-type-summary.csv`, `bnlearn-hc-dag.csv` byte-identical; 44 parent sets identical | Regression check of the reorganization; 12 min 45 s. Details: `docs/reports/1.5.0b.md` |

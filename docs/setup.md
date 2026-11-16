@@ -5,9 +5,9 @@ the versions we actually use. It is the **only** setup guide. It replaces
 `phase-0-detailed-steps.md`, `project-task-list.md` (Phase 0) and `docs/bnsl_header.md`, which
 were deleted in step 1.5.0a (see `docs/decision-log.md`).
 
-> **Status (2026-11-15).** The paths below are today's paths: GOBNILP is still built inside
-> `src/gobnilp/`, and `scoring2a` lives in `src/`. Step 1.5.0b moves the GOBNILP build to
-> `~/tools/gobnilp/` and scoring2a to `tools/scoring2a/`, and will update this file.
+> **Updated 2026-11-15 (step 1.5.0b).** GOBNILP is now built in `~/tools/gobnilp/` (outside
+> the repo), scoring2a's source is in `tools/scoring2a/` and is compiled with `make scoring2a`,
+> and the Python packages are pinned in `requirements.txt` / `requirements-dev.txt`.
 
 Where a step was reconstructed from the shell history (`~/.bash_history`) rather than
 re-run, it says so.
@@ -18,12 +18,13 @@ re-run, it says so.
 |---|---|---|
 | Windows + WSL2 | Ubuntu (WSL2), kernel 6.18 | `uname -r` |
 | Python | 3.14.4 | `.venv/bin/python --version` |
-| pandas / statsmodels | 3.0.5 / 0.14.6 | imported in `.venv` |
+| Python packages | pinned in `requirements.txt` (numpy 2.5.1, pandas 3.0.5, scipy 1.18.0, statsmodels 0.14.6, patsy 1.0.2, matplotlib 3.11.1) and `requirements-dev.txt` (pytest 9.2.0, ruff 0.17.5) | `pip freeze` in `.venv` |
+| GNU Make | 4.4.1 | `make --version` |
 | R | 4.5.2 (2025-10-31) | `R --version` |
 | R packages | bnlearn 5.2.1, nnet 7.3.21, MASS 7.3.66, qgraph 1.10.1 | `packageVersion()` |
 | C/C++ compiler | g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0 | `g++ --version` |
 | SCIP Optimization Suite | 10.0.3 (SCIP 10.0.3, SoPlex 8.0.3) | first lines of `results/gobnilp-std-run.log` |
-| GOBNILP | git commit `5441edf` of `bitbucket.org/jamescussens/gobnilp` ("GitHash: unknown" in its own banner) | `git log -1` inside the GOBNILP folder |
+| GOBNILP | git commit `5441edf` of `bitbucket.org/jamescussens/gobnilp` ("GitHash: unknown" in its own banner), built in `~/tools/gobnilp/` | `git -C ~/tools/gobnilp log -1` |
 
 Jirka's own Kybernetika results used a much older GOBNILP 1.6.3 with SCIP 3.2.1. We don't
 need that version: our build reads the same score files once the header below is added
@@ -83,11 +84,15 @@ so other projects can't break it. It is not committed to git.
 cd ~/bn-project
 python3 -m venv .venv
 source .venv/bin/activate        # the prompt now starts with (.venv)
-pip install numpy pandas scipy statsmodels scikit-learn matplotlib jupyter
+pip install -r requirements-dev.txt   # research packages + pytest + ruff, exact versions
 ```
 
-Step 1.5.0b replaces the `pip install` line with pinned files: `pip install -r requirements.txt`
-for the project and `-r requirements-dev.txt` for pytest and ruff.
+`requirements.txt` holds the packages the research code needs, pinned to exact versions so
+results don't change when a package updates; its last line, `-e .`, installs our own package
+`src/bnjoint/` in *editable* mode (Python uses the folder directly, so edits take effect at
+once). `requirements-dev.txt` adds pytest (tests) and ruff (formatting). Check with `make test`.
+Jupyter and scikit-learn were installed earlier for exploring but are not used by the code, so
+they are not pinned.
 
 ## 5. R packages
 
@@ -108,15 +113,18 @@ variable it computes the BIC of every candidate parent set that survives de Camp
 and writes them to a `.scores` file.
 
 ```bash
-cd ~/bn-project/src
-g++ -O2 -o scoring2a scoring2a.c -lm
-./scoring2a            # with no arguments it prints its usage message
+cd ~/bn-project
+make scoring2a                 # runs: g++ -O2 -o tools/scoring2a/scoring2a tools/scoring2a/scoring2a.c -lm
+tools/scoring2a/scoring2a      # with no arguments it prints its usage message
 ```
+
+The compiled program is not committed (no binaries in git); `make phase1` builds it if it is
+missing. The compiler prints `-Wunused-result` warnings about `fscanf`; they are harmless.
 
 How it is run (from `scoring-how-to-use-it.txt` and Jirka's `script-data24-1`):
 
 ```bash
-./scoring2a <file>.dat 1 9 prune 0 bic > <file>.scores
+tools/scoring2a/scoring2a <file>.dat 1 9 prune 0 bic > <file>.scores
 ```
 
 - `1` is **alpha**. For BIC it multiplies the penalty, so `1` gives the true BIC.
@@ -145,27 +153,43 @@ sudo make install                        # puts `scip` in /usr/local/bin
 `build/CMakeCache.txt` records the settings actually used: `LPS=spx` (the SoPlex LP solver),
 `SYM=snauty`, `GMP=ON`, `AMPL=ON`, `ZIMPL=ON`, `IPOPT=ON`, `TPI=tny`, `PAPILO=off`.
 
-**7b. GOBNILP** (reconstructed from the shell history):
+**SoPlex** needs no separate step: the SCIP Optimization Suite contains SoPlex 8.0.3 and
+builds it together with SCIP (`LPS=spx`).
+
+**7b. GOBNILP**, built **outside the repo** in `~/tools/gobnilp/`:
 
 ```bash
+mkdir -p ~/tools && cd ~/tools
 git clone https://bitbucket.org/jamescussens/gobnilp.git
 cd gobnilp
+git checkout 5441edf                     # the commit we use
 ln -s ~/scipoptsuite-10.0.3/scip scip    # GOBNILP finds SCIP through a link called `scip`
 make
 bin/gobnilp -f data/gaussian.bnsl        # GOBNILP's own example; should solve quickly
 ```
 
 The link must point to the `scip/` folder inside the suite, **not** to `build/`. The history
-shows a first link to `build/` that was removed and replaced with this one after `make`. GOBNILP's Makefile uses SCIP's own `make` system, whose libraries are in
-`scipoptsuite-10.0.3/scip/lib/static/`. *Unsure:* the history doesn't show exactly which
-command created those static libraries. Step 1.5.0b rebuilds GOBNILP and will record it.
+shows a first link to `build/` that was removed and replaced with this one.
+
+GOBNILP's `make` also builds the SCIP libraries it links against: its Makefile's `all` target
+depends on a target `scip` that runs `make -C scip libs`, which writes
+`scipoptsuite-10.0.3/scip/lib/static/`. (Settled in step 1.5.0b: the library timestamps are
+Aug 10, 15:51–15:52, just before the GOBNILP binary's 15:52:31, and a re-run of `make` in the
+new location visibly rebuilds `libscipbase` before linking GOBNILP.) The GOBNILP binary
+contains SCIP (static linking; `ldd` lists only system libraries), so moving the GOBNILP folder
+doesn't break it as long as the `scip` link still points at an existing folder.
+
+*History:* until step 1.5.0b the build lived inside the repo at `src/gobnilp/`. It was moved
+with `mv ~/bn-project/src/gobnilp ~/tools/gobnilp`, the PATH link below was redirected, and
+`make` was re-run there; the data24 smoke test and `make phase1` then gave the same results
+(`docs/reports/1.5.0b.md`).
 
 **7c. Put `gobnilp` on the PATH.** The *PATH* is the list of folders the shell searches when
 you type a command name.
 
 ```bash
 mkdir -p ~/.local/bin
-ln -s <gobnilp folder>/bin/gobnilp.linux.x86_64.gnu.opt.spx ~/.local/bin/gobnilp
+ln -sfn ~/tools/gobnilp/bin/gobnilp.linux.x86_64.gnu.opt.spx ~/.local/bin/gobnilp
 # ~/.local/bin must be on PATH; add this to ~/.bashrc if `which gobnilp` finds nothing:
 export PATH="$HOME/.local/bin:$PATH"
 ```
@@ -173,7 +197,7 @@ export PATH="$HOME/.local/bin:$PATH"
 **7d. Run GOBNILP the right way.**
 
 ```bash
-gobnilp -f <file>.bnsl -s gobnilp.set
+gobnilp -f <file>.bnsl -s tools/gobnilp/gobnilp.set
 ```
 
 - **`-f` is required** in this version. A bare filename (`gobnilp file.bnsl`), as in older
@@ -182,8 +206,13 @@ gobnilp -f <file>.bnsl -s gobnilp.set
   which this newer GOBNILP doesn't recognize, so it prints a warning and never writes `bi.mat`.
   That is harmless: the learned parent sets are printed in the console output as
   `child:-{parent1,parent2}`, and `scripts/fit_cpt_types.py` reads them from the saved log.
-  (The warning is not in `results/gobnilp-std-run.log`, probably because it goes to the error
-  stream, which `tee` doesn't save. Step 1.5.0b re-checks this.)
+  The warning (`WARNING: unknown parameter <gobnilp/outputfile/adjacencymatrix>`) goes to the
+  error stream (stderr), which `| tee` doesn't capture, so it is not in the saved logs
+  (confirmed in step 1.5.0b).
+- GOBNILP also writes `adjmat.txt`/`.dot` and `pdagadjmat.txt`/`.dot` (the DAG and its CPDAG;
+  row = parent, column = child) into the folder it is run from. The Makefile runs it inside the
+  results folder for that reason.
+- Easiest: `make test-data24` (5 seconds) and `make phase1`.
 
 ## 8. The `.bnsl` header GOBNILP needs
 
@@ -201,7 +230,7 @@ SCORES START            ← line 2
 `scripts/add_bnsl_header.sh` adds those lines:
 
 ```bash
-scripts/add_bnsl_header.sh data/bn-data-44-bic.scores data/bn-data-44-bic-fixed.bnsl $(cat data/bn-data-44-varnames.txt)
+scripts/add_bnsl_header.sh data/processed/bn-data-44-bic.scores data/processed/bn-data-44-bic-fixed.bnsl $(cat data/processed/bn-data-44-varnames.txt)
 ```
 
 How we found this: GOBNILP's example file `scores/chest_100_1_3.bnsl` (which Jirka pointed to
@@ -212,7 +241,13 @@ in his Aug 12 email) starts this way, and GOBNILP's reader source looks for `SCO
 - **Windows line endings.** Files made on Windows end each line with `\r\n` (CRLF) instead of
   `\n` (LF). scoring2a and GOBNILP can misread them, and Jirka has been caught by this before.
   Check with `file <name>` ("with CRLF line terminators" means trouble). Fix a *copy* with
-  `sed 's/\r$//' in > out`, never the original in `data/raw/`. `BN-data.csv` is already LF.
+  `sed 's/\r$//' in > out`, never the original in `data/raw/`.
+  **Correction (2026-11-15):** this file used to say "`BN-data.csv` is already LF". That was
+  wrong: `BN-data.csv`, `preprocessed-data.csv`, `data24-training-1.dat`, `scoring2a.c` and
+  `gobnilp.set` all have CRLF endings (`git ls-files --eol` shows `i/crlf`; `file` doesn't
+  report it for CSV files). No result is affected: pandas and R read CRLF correctly, and
+  scoring2a reads `bn-data-44.dat`, which our script writes with LF. Git is told never to
+  convert the originals (`.gitattributes`).
 - **`bi.mat` is never written** (see 7d); use the console log.
 - **Run from the project root** unless a script says otherwise.
 
@@ -220,8 +255,10 @@ in his Aug 12 email) starts this way, and GOBNILP's reader source looks for `SCO
 
 ```bash
 git --version && python3 --version && R --version | head -1 && g++ --version | head -1
-src/scoring2a | head -2                     # prints the usage message
-which gobnilp                               # ~/.local/bin/gobnilp
+make scoring2a && tools/scoring2a/scoring2a | head -2   # prints the usage message
+which gobnilp && readlink -f $(which gobnilp)           # ~/tools/gobnilp/bin/gobnilp.linux.x86_64.gnu.opt.spx
 Rscript -e 'library(bnlearn)'               # no error
-bash scripts/run_gobnilp_pipeline.sh        # ends with objective value -64837.738627
+make test                                   # all tests pass
+make test-data24                            # objective value -3411.597651
+make phase1                                 # ends with objective value -64837.738627
 ```

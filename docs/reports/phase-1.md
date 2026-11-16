@@ -5,36 +5,38 @@
 > **Correction** notes placed next to the original text, never by rewriting it. Each
 > correction is explained in `docs/reports/1.5.0a.md`.
 
+> **Note (2026-11-15, step 1.5.0b): files moved.** The paths in this report are the
+> September paths. Contents are unchanged (moved with `git mv`; every derived file was rebuilt
+> from scratch and came out identical, see `docs/reports/1.5.0b.md`). New locations:
+>
+> | Path in this report | Now |
+> |---|---|
+> | `data/BN-data.csv` | `data/raw/BN-data.csv` |
+> | `data/bn-data-44.dat`, `data/bn-data-44-bic.scores` (and the `-fixed.bnsl`, varnames files) | `data/processed/…` (same names) |
+> | `results/gobnilp-std-run.log`, `results/cpt-type-summary.csv`, `results/bnlearn-hc-dag.csv` | `results/phase1/…` (same names) |
+> | `src/scoring2a.c`, `src/gobnilp.set` | `tools/scoring2a/scoring2a.c`, `tools/gobnilp/gobnilp.set` |
+> | `scripts/bnlearn_hc.R` | `R/bnlearn_hc.R` |
+> | `python scripts/convert_data.py`, `bash scripts/run_gobnilp_pipeline.sh`, `python scripts/fit_cpt_types.py`, `Rscript scripts/bnlearn_hc.R` | all four: `make phase1` (`run_gobnilp_pipeline.sh` was replaced by the Makefile) |
+
 ## Reproducibility details
-- Python: 3.14.4
-- pandas: 3.0.5
-- statsmodels: 0.14.6
-- R: 4.5.2 (2025-10-31)
-- bnlearn: 5.2.1
-- GOBNILP: GitHash unknown, built against SCIP 10.0.3 [precision: 8 byte],
-  LP solver SoPlex 8.0.3, compiler gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0,
-  build config: LPS=spx, SYM=snauty, GMP=true, AMPL=true (full build
-  options in `results/gobnilp-std-run.log`)
-- `scoring2a`: compiled from `src/scoring2a.c` (Cassio de Campos's scoring
-  script, provided by Jirka via email Aug 5 2026) with g++ (Ubuntu
-  15.2.0-16ubuntu1) 15.2.0
+
+> **Note (2026-11-15, step 1.5.0b):** the software versions, the build details of GOBNILP and
+> scoring2a, and the step-by-step run instructions that stood here (sections "Reproducibility
+> details" and "How to reproduce these results from scratch") now live in one place each:
+> versions in [`docs/setup.md`, "Versions in use"](../setup.md#versions-in-use), running the
+> pipeline in [`docs/code-guide/phase1-pipeline.md`](../code-guide/phase1-pipeline.md)
+> (`make phase1`). The removed text can be read with `git show a183df9:docs/reports/phase-1.md`.
+> **Correction (2026-11-15):** that text said `scoring2a.c` came in Jirka's Aug 5 email; it came
+> in his **Jul 8, 2026** email ("unix files.zip"), and the Aug 5 email sent only `BN-data.csv`
+> (confirmed by Anika; decision log entry 14). No result or finding was changed; the finding
+> below is kept as it was.
+
 - Randomness: `scoring2a` and GOBNILP's exact search are deterministic given
   the same input file -- no seed needed. `bnlearn::hc()` in
   `scripts/bnlearn_hc.R` was run with `set.seed(1)` before calling
   `hc()`. Confirmed reproducible: re-running the script produced an
   identical structure (same 66-arc model string, same penalization
   coefficient) both times.
-
-## How to reproduce these results from scratch
-1. `python scripts/convert_data.py` -- builds `data/bn-data-44.dat` from
-   `data/BN-data.csv`
-2. `bash scripts/run_gobnilp_pipeline.sh` -- runs `scoring2a` (alpha=1,
-   palim=9, prune, bic) then GOBNILP's exact structure search; produces
-   `results/gobnilp-std-run.log`
-3. `python scripts/fit_cpt_types.py` -- fits STD/MLR/OLR for every learned
-   family; produces `results/cpt-type-summary.csv`
-4. `Rscript scripts/bnlearn_hc.R` -- independent hill-climbing cross-check;
-   produces `results/bnlearn-hc-dag.csv`
 
 ## File map -- where each claim in this document comes from
 | Claim | Source file |
@@ -63,27 +65,11 @@ Higher is better under this convention (this is the opposite sign from the
 two, they'll give the same *ranking* but look like different numbers).
 
 ## Environment gotchas discovered while running this (useful if re-running later)
-- `bn-project` and the GitHub repo `bayesian-network-learning` are the same
-  repo -- the local folder name just doesn't match the GitHub repo name.
-  That's fine and doesn't need fixing, Git doesn't care about folder names.
 
-  > **Correction (2026-11-15):** the GitHub repo is
-  > `p-anika/bn-joint-structure-cpt-learning` (checked with `git remote -v`), not
-  > `bayesian-network-learning`. `bayesian-network-learning` was an earlier prototype repo.
-  > The local folder `bn-project` and the GitHub name still differ, which is harmless.
-- GOBNILP wasn't on PATH after building it -- fixed by symlinking the built
-  binary into `~/.local/bin/gobnilp` and adding that folder to PATH in
-  `~/.bashrc`.
-- This GOBNILP build's command-line syntax needs `-f <file>` for the input
-  file, not a bare filename argument (older versions apparently accepted a
-  bare filename; this one doesn't).
-- `gobnilp.set` (inherited from Jirka's older 1.6.3-era setup) sets a
-  parameter called `gobnilp/outputfile/adjacencymatrix` that this newer
-  GOBNILP build doesn't recognize -- it prints a harmless warning and just
-  never writes the `bi.mat` adjacency-matrix file. Not a real problem: the
-  console output GOBNILP prints while solving already contains every
-  learned family in an unambiguous `child:-{parents}` format, so that's
-  what `scripts/fit_cpt_types.py` parses instead of relying on `bi.mat`.
+> **Note (2026-11-15, step 1.5.0b):** the gotchas listed here (GOBNILP on the PATH, the `-f`
+> flag, the ignored `gobnilp.set` parameter and `bi.mat`, the repo name) now live in
+> [`docs/setup.md` §7c–7d](../setup.md#7-scip-and-gobnilp-exact-structure-search) and §2. The
+> original text is in this file's git history.
 
 ## Step 1.3 result: GOBNILP structure search
 - Ran: `bash scripts/run_gobnilp_pipeline.sh` (internally:

@@ -1,0 +1,16 @@
+# Line endings. Windows ends lines with CR+LF ("\r\n"), Linux with LF ("\n").
+# Files we write are stored with LF, so scoring2a, GOBNILP and the scripts read them the same
+# way on every computer.
+* text=auto eol=lf
+
+# Jirka's originals are kept EXACTLY as received, CRLF included (CLAUDE.md: data/raw is
+# read-only; checksums in data/raw/README.md). "-text" tells git never to touch their bytes.
+data/raw/** -text
+tools/scoring2a/scoring2a.c -text
+tools/scoring2a/scoring-how-to-use-it.txt -text
+tools/scoring2a/script-data24-1 -text
+tools/gobnilp/gobnilp.set -text
+
+# Never treat these as text
+*.png binary
+*.pdf binary

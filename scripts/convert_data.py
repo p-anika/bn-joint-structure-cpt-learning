@@ -1,36 +1,35 @@
-import pandas as pd
+"""Convert BN-data.csv into scoring2a's `.dat` format and save the variable names.
 
-SRC = "data/BN-data.csv"
-DST = "data/bn-data-44.dat"
+Inputs:  data/raw/BN-data.csv (values -1/0/1)
+Outputs: data/processed/bn-data-44.dat, data/processed/bn-data-44-varnames.txt
+Run:     python scripts/convert_data.py            (defaults below)
+         python scripts/convert_data.py --csv X.csv --dat X.dat --varnames X-names.txt
 
-df = pd.read_csv(SRC)
+All the logic is in `bnjoint.io` (`src/bnjoint/io.py`); this script only reads the
+command-line arguments and prints a one-line summary.
+"""
 
-uniq = sorted(pd.unique(df.values.ravel()))
-print("Unique raw values found in BN-data.csv:", uniq)
-expected = {-1, 0, 1}
-if not set(uniq).issubset(expected):
-    raise ValueError(
-        f"Found values outside {expected}: {set(uniq) - expected}. "
-        "This contradicts both the paper (Sec 4.1, k=3 states) and Jirka's "
-        "own remapping code from his Aug 5 email -- investigate before proceeding."
+import argparse
+from pathlib import Path
+
+from bnjoint import config
+from bnjoint.io import convert_bn_data
+
+
+def main() -> None:
+    """Parse arguments, convert, print a summary."""
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--csv", type=Path, default=config.BN_DATA_CSV, help="input CSV")
+    parser.add_argument("--dat", type=Path, default=config.DAT_FILE, help="output .dat")
+    parser.add_argument(
+        "--varnames", type=Path, default=config.VARNAMES_FILE, help="output names file"
     )
+    args = parser.parse_args()
 
-remap = {-1: 0, 0: 1, 1: 2}
-df_remapped = df.apply(lambda col: col.map(remap))
+    df = convert_bn_data(args.csv, args.dat, args.varnames)
+    n_rows, n_vars = df.shape
+    print(f"Wrote {args.dat} ({n_vars} variables, {n_rows} rows) and {args.varnames}")
 
-nvars = df_remapped.shape[1]
-nrows = df_remapped.shape[0]
-print(f"nvars={nvars}, nrows={nrows}")  # expect nvars=44, nrows=1661 per paper Sec 4.1
-arities = [3] * nvars  # paper confirms k=3 for every variable, uniformly
 
-with open(DST, "w") as f:
-    f.write(f"{nvars}\n")
-    f.write(" ".join(str(a) for a in arities) + "\n")
-    f.write(f"{nrows}\n")
-    for _, row in df_remapped.iterrows():
-        f.write(" ".join(str(int(v)) for v in row) + "\n")
-
-with open("data/bn-data-44-varnames.txt", "w") as f:
-    f.write(" ".join(df.columns))
-
-print(f"Wrote {DST}")
+if __name__ == "__main__":
+    main()
