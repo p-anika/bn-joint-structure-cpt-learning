@@ -131,8 +131,17 @@ pin down how much of this gap is "different structure" vs. something else
 > to the existing CSV gives **16 STD, 24 MLR, 4 OLR**. The official corrected split comes from
 > re-running the fixed script in step 1.5.1; see `docs/reports/1.5.1.md`. The remaining gap to
 > the paper's 19/22/3 is what step 1.5.2 (fitting on the hc structure) tests.
+>
+> **Update (2026-11-16):** step 1.5.1 re-ran the fixed script: **16 STD / 24 MLR / 4 OLR**, with
+> BIC values identical to this report's and the same six nodes changed. File:
+> `results/phase1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv` (supersedes
+> `results/phase1/cpt-type-summary.csv`). Step 1.5.2 fitted the hc structure and reproduced the
+> paper's 19/22/3 with the same type on every node, so the remaining gap is entirely due to the
+> different structure. Details: [`docs/reports/1.5.1-1.5.2.md`](1.5.1-1.5.2.md).
 
 ## An important quirk I noticed: STD and MLR sometimes tie exactly
+> **Note (2026-11-16):** the full argument, with a worked example, is in
+> [explainer 04](../explainers/04-one-parent-mlr-equals-std.md).
 Look at the raw fit_cpt_types.py output for any node with **1 or fewer
 parents** -- e.g. `a3: STD=-1142.51 MLR=-1142.51`. This isn't a coincidence
 or a bug. Here's why it happens, worth understanding rather than just
@@ -181,6 +190,8 @@ reports for its own STD winners.
 
 > **Correction (2026-11-15):** all 10 STD winners have exactly **1** parent. The only 0-parent
 > node, d11, was labelled MLR because of the tie bug described above.
+> **Update (2026-11-16):** with the fix (step 1.5.1) there are 16 STD winners: 15 with one parent
+> and d11 with none. See [`docs/reports/1.5.1-1.5.2.md`](1.5.1-1.5.2.md).
 
 ## Max parent count sanity check
 Paper's final structure: max 2 parents per node (their Table 2).
@@ -265,7 +276,9 @@ this reproduction.
 
 > **Correction (2026-11-15)** to this list:
 > - *Split.* Part of the 23/68/9 vs 43/50/7 gap was the tie-breaking bug (see the correction
->   in Step 1.4). With the tie rule the existing numbers give 16/24/4 (36/55/9).
+>   in Step 1.4). With the tie rule the existing numbers give 16/24/4 (36/55/9). Confirmed by re-running
+>   the fixed code in step 1.5.1 (2026-11-16); on the hc structure the fixed code gives the
+>   paper's 19/22/3 exactly (step 1.5.2). See [`docs/reports/1.5.1-1.5.2.md`](1.5.1-1.5.2.md).
 > - *BIC magnitude.* Confirmed by Jirka (Sep 28, 2026): Figure 4 comes from 10-fold
 >   cross-validation.
 > - *Paper's structure.* Confirmed by Jirka (Sep 28, 2026): "The model structure in the
@@ -282,4 +295,7 @@ this reproduction.
   the Kybernetika paper says "19 standard CPTs" and, in an adjacent sentence, "all 17 standard
   CPTs correspond to…". This hasn't been re-checked against the PDF (it isn't in the repo).
   Table 2 (`data/reference/kybernetika-table2.csv`) has 19 STD rows. Worth re-reading before
-  quoting the paper; probably not worth an email question on its own.
+  quoting the paper; probably not worth an email question on its own. **Update (2026-11-16):** verified
+  by Anika: Section 4.3 says "all 17 standard CPTs correspond either to variables with no parents
+  (A3) or to those with just one parent"; Table 2 lists 19, and our step 1.5.2 fit reproduces 19
+  (`docs/reports/1.5.1-1.5.2.md`).

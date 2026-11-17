@@ -1,4 +1,5 @@
-"""Tests for `bnjoint.cpt_scores`: parameter counts, BIC on a hand-computed example, winner rule.
+"""Tests for `bnjoint.cpt_scores`: parameter counts, BIC on a hand-computed example, MLR = STD
+for 0 and 1 parents, convergence flags, and the tie rule (step 1.5.1).
 
 Run with `make test` (or `pytest tests/test_cpt_scores.py -v`).
 
@@ -84,19 +85,98 @@ def test_mlr_no_parents_equals_std_no_parents() -> None:
     )
 
 
-# ---------------------------------------------------------------- winner rule
+# ---------------------------------------------------------------- MLR = STD for 0 and 1 parents
+# Why they must agree: docs/explainers/04-one-parent-mlr-equals-std.md. With 0 or 1 parents,
+# MLR has exactly as many free parameters as STD and can represent every table STD can, so the
+# maximized log-likelihoods are equal (up to the optimizer's rounding) and so are the BICs.
+
+
+def test_mlr_one_parent_equals_std_synthetic() -> None:
+    """Random 1-parent data in which every (parent, child) combination occurs."""
+    rng = np.random.default_rng(1)
+    x = rng.choice([-1, 0, 1], size=300)
+    # child depends on the parent, so the test is not just "both are the marginal"
+    y = np.where(rng.random(300) < 0.6, x, rng.choice([-1, 0, 1], size=300))
+    df = pd.DataFrame({"x": x, "y": y})
+    assert (pd.crosstab(df["x"], df["y"]) > 0).all().all()  # no empty cell (see explainer 04)
+    w = cs.penalty_weight(len(df))
+    assert cs.n_params_mlr(1) == cs.n_params_std(1)
+    assert cs.bic_mlr(df, "y", ["x"], k=3, w=w) == pytest.approx(
+        cs.bic_std(df, "y", ["x"], k=3, w=w), abs=1e-6
+    )
+
+
+def _families_with_at_most_one_parent() -> list[tuple[str, list[str]]]:
+    """The 0- and 1-parent families of the Phase 1 GOBNILP structure: 17 with one parent,
+    plus d11 with none."""
+    from bnjoint import config
+    from bnjoint.gobnilp_io import parse_parent_sets
+
+    varnames = config.VARNAMES_FILE.read_text().split()
+    parents = parse_parent_sets(config.PHASE1_GOBNILP_LOG.read_text(), varnames)
+    return [(v, p) for v, p in parents.items() if len(p) <= 1]
+
+
+@pytest.mark.parametrize(("child", "parents"), _families_with_at_most_one_parent())
+def test_mlr_equals_std_on_our_data(child: str, parents: list[str]) -> None:
+    """On BN-data.csv, every 0- or 1-parent family has BIC_MLR == BIC_STD within 1e-6.
+    In Phase 1 they differed by about 1e-13, which is why the tie tolerance is needed."""
+    from bnjoint import config
+    from bnjoint.io import read_bn_data
+
+    df = read_bn_data(config.BN_DATA_CSV)
+    w = cs.penalty_weight(len(df))
+    assert cs.bic_mlr(df, child, parents, k=3, w=w) == pytest.approx(
+        cs.bic_std(df, child, parents, k=3, w=w), abs=1e-6
+    )
+
+
+# ---------------------------------------------------------------- convergence flags
+def test_score_family_reports_convergence(tiny: pd.DataFrame) -> None:
+    """MLR and OLR report whether their optimizer converged; OLR without parents is not
+    fitted at all, so its flag is None (not False)."""
+    rng = np.random.default_rng(2)
+    df = pd.DataFrame({"x": rng.choice([-1, 0, 1], 200), "y": rng.choice([-1, 0, 1], 200)})
+    fam = cs.score_family(df, "y", ["x"])
+    assert fam.converged == {"MLR": True, "OLR": True}
+    fam0 = cs.score_family(df, "y", [])
+    assert fam0.converged == {"MLR": True, "OLR": None}
+    assert fam0.bic["OLR"] == -np.inf
+
+
+# ---------------------------------------------------------------- winner rule (step 1.5.1)
+# CLAUDE.md: scores within 1e-6 are tied; ties go to STD, then OLR, then MLR (simplest first).
 def test_pick_winner_takes_highest_bic() -> None:
     assert cs.pick_winner({"STD": -10.0, "MLR": -9.0, "OLR": -11.0}) == "MLR"
 
 
-def test_pick_winner_exact_tie_goes_to_first_listed() -> None:
-    """Current (pre-1.5.1) rule: Python's max() keeps the first of exactly equal scores,
-    and the order is STD, MLR, OLR."""
+def test_tie_rule_picks_std_over_rounding_noise() -> None:
+    """The Phase 1 bug: MLR was 1e-13 higher than STD only through rounding and won.
+    Under the tie rule this is a tie, and STD wins."""
+    assert cs.pick_winner({"STD": -9.0, "MLR": -9.0 + 1e-13, "OLR": -20.0}) == "STD"
+
+
+def test_tie_rule_real_phase1_case() -> None:
+    """a13 in results/phase1/cpt-type-summary.csv: MLR won the old rule by ~2e-13."""
+    scores = {"STD": -1583.719733998301, "MLR": -1583.7197339983009, "OLR": -1592.7923607959506}
+    assert cs.pick_winner(scores) == "STD"
+
+
+def test_tie_rule_exact_three_way_tie_goes_to_std() -> None:
     assert cs.pick_winner({"STD": -9.0, "MLR": -9.0, "OLR": -9.0}) == "STD"
 
 
-def test_pick_winner_current_rule_has_no_tolerance() -> None:
-    """Documents the known bug that step 1.5.1 fixes: a rounding-size difference (1e-13)
-    is NOT treated as a tie today, so MLR wins. Step 1.5.1 changes this rule on purpose
-    (decision log) and replaces this test with the 1e-6 tie rule."""
-    assert cs.pick_winner({"STD": -9.0, "MLR": -9.0 + 1e-13, "OLR": -20.0}) == "MLR"
+def test_tie_rule_olr_beats_mlr_in_a_tie() -> None:
+    """Order is STD, OLR, MLR: OLR has fewer parameters than MLR, so it wins their tie."""
+    assert cs.pick_winner({"STD": -20.0, "MLR": -9.0 + 5e-7, "OLR": -9.0}) == "OLR"
+
+
+def test_tie_rule_tolerance_is_1e6() -> None:
+    """Just inside 1e-6 is a tie (STD); clearly outside it is not (MLR)."""
+    assert cs.pick_winner({"STD": -9.0, "MLR": -9.0 + 0.9e-6, "OLR": -20.0}) == "STD"
+    assert cs.pick_winner({"STD": -9.0, "MLR": -9.0 + 1e-5, "OLR": -20.0}) == "MLR"
+
+
+def test_tie_rule_handles_minus_infinity() -> None:
+    """A root node has OLR = -inf (not fitted); that must never cause an error or a win."""
+    assert cs.pick_winner({"STD": -9.0, "MLR": -9.0 + 1e-13, "OLR": -np.inf}) == "STD"

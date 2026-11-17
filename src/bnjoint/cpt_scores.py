@@ -21,15 +21,22 @@ The equation numbers for the STD count (eq. 6) and BIC (eq. 7/9) are the ones us
 the Phase 1 code; the MLR (eq. 10-13) and OLR (eq. 16-17) references come from the original
 script's comments. Coding choices are decision log entries 7-9.
 
-Winner rule (`pick_winner`): the highest BIC; an EXACT tie goes to the type listed first
-(STD, then MLR, then OLR). This is the Phase 1 rule, kept unchanged in step 1.5.0b. It has a
-known flaw: rounding-size differences (~1e-13) are not treated as ties. Step 1.5.1 replaces it
-with a 1e-6 tolerance and the order STD, OLR, MLR.
+Winner rule (`pick_winner`, step 1.5.1): the highest BIC wins, but scores within
+`config.TIE_TOLERANCE` = 1e-6 of the best count as tied, and a tie goes to the simplest type:
+STD, then OLR, then MLR (`config.TIE_ORDER`). Why: with 0 or 1 parents MLR and STD are the SAME
+model (docs/explainers/04-one-parent-mlr-equals-std.md), so their BICs differ only by rounding
+(~1e-13). The Phase 1 rule had no tolerance and let MLR win 6 such ties at random.
 
-Run the whole fit: `python scripts/fit_cpt_types.py` (or `make phase1`).
+Convergence: MLR and OLR are fitted by iterative optimizers. Each fit records whether its
+optimizer reported convergence (statsmodels `mle_retvals["converged"]`); a fit that did not
+converge may have a too-low log-likelihood, so its BIC would be unreliable. `fit_cpt_types`
+writes the flags into the output CSV and `scripts/fit_cpt_types.py` prints any failures.
+
+Run the whole fit: `python scripts/fit_cpt_types.py [--structure hc]` (or `make phase1.5`).
 """
 
 import warnings
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
@@ -39,7 +46,9 @@ from statsmodels.miscmodels.ordinal_model import OrderedModel
 
 from bnjoint import config
 
-CPT_TYPES: tuple[str, ...] = ("STD", "MLR", "OLR")  # also the tie-break order (see module doc)
+# The three types, in the order of the output columns (bic_std, bic_mlr, bic_olr). This is NOT
+# the tie-break order; that is config.TIE_ORDER (STD, OLR, MLR).
+CPT_TYPES: tuple[str, ...] = ("STD", "MLR", "OLR")
 
 
 # ---------------------------------------------------------------- parameter counts
@@ -152,71 +161,163 @@ def mlr_design(df: pd.DataFrame, parents: list[str], k: int) -> pd.DataFrame:
     return X
 
 
+@dataclass
+class Fit:
+    """The result of one iterative fit (MLR or OLR).
+
+    Attributes:
+        loglik: maximized log-likelihood, or -inf if the fit raised an error.
+        converged: True/False as reported by the optimizer; False if the fit raised an error.
+    """
+
+    loglik: float
+    converged: bool
+
+
+def _converged(result) -> bool:
+    """Read the optimizer's own convergence flag from a statsmodels result.
+
+    `mle_retvals` is a dict statsmodels fills in after fitting; its "converged" entry is True
+    when the optimizer stopped because the gradient was ~0 (a maximum), and False when it
+    stopped because it ran out of iterations. Missing key -> treated as not converged.
+    """
+    return bool(result.mle_retvals.get("converged", False))
+
+
+def fit_mlr(df: pd.DataFrame, child: str, parents: list[str], k: int = config.K_STATES) -> Fit:
+    """Fit multinomial logistic regression (statsmodels MNLogit, Newton's method by default).
+
+    Args:
+        df: the data. child: the child column. parents: parent columns (may be empty).
+        k: number of states (only used to check the design matrix).
+
+    Returns:
+        A `Fit`. If statsmodels raises an error, the error is printed and the result is
+        Fit(-inf, False), so this type can never win.
+
+    Example:
+        >>> fit_mlr(df, "a3", ["a4"])   # doctest: +SKIP
+        Fit(loglik=-1120.27..., converged=True)
+    """
+    try:
+        result = MNLogit(df[child], mlr_design(df, parents, k)).fit(disp=0)  # disp=0: quiet
+    except Exception as e:  # report and give the type no chance of winning
+        print(f"[{child}] MLR fit failed: {e}")
+        return Fit(-np.inf, False)
+    return Fit(result.llf, _converged(result))  # llf = log-likelihood at the fitted parameters
+
+
 def bic_mlr(df: pd.DataFrame, child: str, parents: list[str], k: int, w: float) -> float:
-    """BIC of multinomial logistic regression (statsmodels MNLogit). -inf if the fit fails.
+    """BIC of multinomial logistic regression; -inf if the fit fails. `w` = penalty weight.
 
     Example:
         >>> bic_mlr(df, "a3", ["a4"], k=3, w=penalty_weight(len(df)))   # doctest: +SKIP
+        -1142.508...
     """
-    try:
-        ll = MNLogit(df[child], mlr_design(df, parents, k)).fit(disp=0).llf
-    except Exception as e:  # report and give the type no chance of winning
-        print(f"[{child}] MLR fit failed: {e}")
-        return -np.inf
-    return ll - w * n_params_mlr(len(parents), k)
+    return fit_mlr(df, child, parents, k).loglik - w * n_params_mlr(len(parents), k)
 
 
 # ---------------------------------------------------------------- OLR
-def bic_olr(df: pd.DataFrame, child: str, parents: list[str], k: int, w: float) -> float:
-    """BIC of ordinal logistic regression (statsmodels OrderedModel, logit link, BFGS).
+def fit_olr(df: pd.DataFrame, child: str, parents: list[str]) -> Fit | None:
+    """Fit ordinal logistic regression (statsmodels OrderedModel, logit link, BFGS optimizer).
 
     Parents enter as their raw values -1/0/1, one slope each (NOT dummy-coded; decision 8).
-    A node without parents gets -inf: OLR is only used with parents (decision 9).
+    A node without parents is not fitted (decision 9): the result is None.
+
+    Returns:
+        A `Fit`, Fit(-inf, False) if statsmodels raises an error, or None without parents.
+
+    Example:
+        >>> fit_olr(pd.DataFrame({"y": [0, 1]}), "y", []) is None
+        True
+    """
+    if not parents:
+        return None
+    try:
+        model = OrderedModel(df[child], df[parents].astype(float), distr="logit")
+        result = model.fit(method="bfgs", disp=0)
+    except Exception as e:
+        print(f"[{child}] OLR fit failed: {e}")
+        return Fit(-np.inf, False)
+    return Fit(result.llf, _converged(result))
+
+
+def bic_olr(df: pd.DataFrame, child: str, parents: list[str], k: int, w: float) -> float:
+    """BIC of ordinal logistic regression; -inf without parents or if the fit fails.
 
     Example:
         >>> bic_olr(pd.DataFrame({"y": [0, 1]}), "y", [], k=3, w=1.0)
         -inf
     """
-    if not parents:
+    fit = fit_olr(df, child, parents)
+    if fit is None:
         return -np.inf
-    try:
-        model = OrderedModel(df[child], df[parents].astype(float), distr="logit")
-        ll = model.fit(method="bfgs", disp=0).llf
-    except Exception as e:
-        print(f"[{child}] OLR fit failed: {e}")
-        return -np.inf
-    return ll - w * n_params_olr(len(parents), k)
+    return fit.loglik - w * n_params_olr(len(parents), k)
 
 
 # ---------------------------------------------------------------- per family and whole network
+@dataclass
+class FamilyScores:
+    """BIC of the three CPT types for one family, plus the convergence flags.
+
+    Attributes:
+        bic: {"STD": ..., "MLR": ..., "OLR": ...}; OLR is -inf for a node without parents.
+        converged: {"MLR": bool, "OLR": bool or None}; None means "not fitted" (no parents).
+            STD has no flag: its maximum is a closed formula (counts), not an optimizer.
+    """
+
+    bic: dict[str, float]
+    converged: dict[str, bool | None]
+
+
 def score_family(
     df: pd.DataFrame, child: str, parents: list[str], k: int = config.K_STATES
-) -> dict[str, float]:
-    """BIC of all three CPT types for one family, as {"STD": ..., "MLR": ..., "OLR": ...}.
+) -> FamilyScores:
+    """Score all three CPT types for one family (each model is fitted exactly once).
 
     Example:
         >>> score_family(df, "a3", ["a4"])   # doctest: +SKIP
-        {'STD': -1142.508..., 'MLR': -1142.508..., 'OLR': ...}
+        FamilyScores(bic={'STD': -1142.508..., 'MLR': -1142.508..., 'OLR': -1159.886...},
+                     converged={'MLR': True, 'OLR': True})
     """
     w = penalty_weight(len(df))
-    return {
-        "STD": bic_std(df, child, parents, k, w),
-        "MLR": bic_mlr(df, child, parents, k, w),
-        "OLR": bic_olr(df, child, parents, k, w),
-    }
+    n = len(parents)
+    mlr = fit_mlr(df, child, parents, k)
+    olr = fit_olr(df, child, parents)
+    return FamilyScores(
+        bic={
+            "STD": bic_std(df, child, parents, k, w),
+            "MLR": mlr.loglik - w * n_params_mlr(n, k),
+            "OLR": -np.inf if olr is None else olr.loglik - w * n_params_olr(n, k),
+        },
+        converged={"MLR": mlr.converged, "OLR": None if olr is None else olr.converged},
+    )
 
 
-def pick_winner(scores: dict[str, float]) -> str:
-    """Return the CPT type with the highest BIC (Phase 1 rule; see the module docstring).
+def pick_winner(
+    scores: dict[str, float],
+    tol: float = config.TIE_TOLERANCE,
+    order: tuple[str, ...] = config.TIE_ORDER,
+) -> str:
+    """Return the winning CPT type under the tie rule (see the module docstring).
 
-    Python's `max` returns the FIRST key with the largest value, so exact ties go to the
-    type that comes first in `scores` (STD, MLR, OLR as built by `score_family`).
+    Step by step: find the best score; every type within `tol` of it is "tied for best";
+    of those, return the one that comes first in `order` (STD, OLR, MLR).
+
+    Args:
+        scores: {"STD": bic, "MLR": bic, "OLR": bic}; -inf is allowed.
+        tol: tie tolerance (default 1e-6).
+        order: preference among tied types (default simplest first).
 
     Example:
-        >>> pick_winner({"STD": -9.0, "MLR": -9.0, "OLR": -10.0})
+        >>> pick_winner({"STD": -9.0, "MLR": -9.0 + 1e-13, "OLR": -10.0})   # rounding noise
         'STD'
+        >>> pick_winner({"STD": -9.0, "MLR": -8.0, "OLR": -10.0})           # a real difference
+        'MLR'
     """
-    return max(scores, key=scores.get)
+    best = max(scores.values())
+    tied = [t for t in order if scores[t] >= best - tol]
+    return tied[0]
 
 
 def fit_cpt_types(
@@ -229,26 +330,36 @@ def fit_cpt_types(
 
     Args:
         df: the data (values -1/0/1).
-        parents_by_var: {child: [parents]}, e.g. from `gobnilp_io.parse_parent_sets`.
+        parents_by_var: {child: [parents]}, e.g. from `gobnilp_io.parse_parent_sets` or
+            `structures.read_adjacency_csv`.
         varnames: the variables, in the order the output rows should have.
         k: number of states.
 
     Returns:
-        DataFrame with columns variable, n_parents, bic_std, bic_mlr, bic_olr, winner
-        (the columns of `results/phase1/cpt-type-summary.csv`).
+        DataFrame with columns variable, n_parents, parents (";"-separated, as in
+        data/reference/kybernetika-table2.csv), bic_std, bic_mlr, bic_olr, mlr_converged,
+        olr_converged (empty for a node without parents), winner.
+
+    Example:
+        >>> fit_cpt_types(df, {"a3": ["a4"], "a4": []}, ["a3", "a4"])   # doctest: +SKIP
+          variable  n_parents parents      bic_std  ...  winner
+        0       a3          1      a4 -1142.508...  ...     STD
     """
     rows = []
     for v in varnames:
         parents = parents_by_var[v]
-        scores = score_family(df, v, parents, k)
+        fam = score_family(df, v, parents, k)
         rows.append(
             {
                 "variable": v,
                 "n_parents": len(parents),
-                "bic_std": scores["STD"],
-                "bic_mlr": scores["MLR"],
-                "bic_olr": scores["OLR"],
-                "winner": pick_winner(scores),
+                "parents": ";".join(parents),
+                "bic_std": fam.bic["STD"],
+                "bic_mlr": fam.bic["MLR"],
+                "bic_olr": fam.bic["OLR"],
+                "mlr_converged": fam.converged["MLR"],
+                "olr_converged": fam.converged["OLR"],
+                "winner": pick_winner(fam.bic),
             }
         )
     return pd.DataFrame(rows)

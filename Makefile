@@ -23,6 +23,8 @@ CXX       ?= g++
 PROCESSED ?= data/processed
 OUT       ?= results/phase1
 OUT24     ?= results/test-data24
+# Phase 1.5 results, one folder per experiment (results/phase1.5/README.md)
+OUT15     ?= results/phase1.5
 
 # scoring2a settings (decision log entry 5): alpha = 1 (true BIC), palim = 9, prune, score bic
 ALPHA := 1
@@ -37,14 +39,20 @@ VARNAMES  := $(PROCESSED)/bn-data-44-varnames.txt
 SCORES    := $(PROCESSED)/bn-data-44-bic.scores
 BNSL      := $(PROCESSED)/bn-data-44-bic-fixed.bnsl
 GOB_LOG   := $(OUT)/gobnilp-std-run.log
-CPT_CSV   := $(OUT)/cpt-type-summary.csv
 HC_CSV    := $(OUT)/bnlearn-hc-dag.csv
 BNSL24    := $(PROCESSED)/data24-training-1-bic-fixed.bnsl
 
-.PHONY: help phase1 test-data24 provenance scoring2a test lint format inventory
+# Phase 1.5 outputs (fitting code: scripts/fit_cpt_types.py + src/bnjoint/)
+FIT_DEPS  := $(RAW)/BN-data.csv $(VARNAMES) scripts/fit_cpt_types.py src/bnjoint/cpt_scores.py src/bnjoint/config.py
+CPT151    := $(OUT15)/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv
+CPT152    := $(OUT15)/1.5.2-hc-vs-table2/cpt-type-summary-hc.csv
+CMP152    := $(OUT15)/1.5.2-hc-vs-table2/table2-comparison.csv
+TABLE2    := data/reference/kybernetika-table2.csv
+
+.PHONY: help phase1 phase1.5 test-data24 provenance scoring2a test lint format inventory
 
 help:   ## list the targets
-	@grep -E '^[a-z0-9-]+:.*##' $(MAKEFILE_LIST) | sed -E 's/:.*## /\t/'
+	@grep -E '^[a-z0-9.-]+:.*##' $(MAKEFILE_LIST) | sed -E 's/:.*## /\t/'
 
 # ---------------------------------------------------------------- tools
 scoring2a: $(SCORING2A)   ## build de Campos's scoring program from source
@@ -53,7 +61,10 @@ $(SCORING2A): tools/scoring2a/scoring2a.c
 	$(CXX) -O2 -o $@ $< -lm
 
 # ---------------------------------------------------------------- Phase 1
-phase1: $(GOB_LOG) $(CPT_CSV) $(HC_CSV)   ## full Phase 1: scores, GOBNILP, CPT types, hc (~20 min from scratch)
+# Stage 5 (CPT types) is no longer part of this target: its output
+# results/phase1/cpt-type-summary.csv is the record of what was reported to Jirka on Sep 7 and
+# must never be regenerated (it had the tie bug). Its corrected version is made by `make phase1.5`.
+phase1: $(GOB_LOG) $(HC_CSV)   ## Phase 1 structures: scores, GOBNILP, hc (~20 min from scratch)
 	@grep "objective value" $(GOB_LOG)
 
 # 1. BN-data.csv -> scoring2a's .dat format + names file (one rule makes both files)
@@ -75,14 +86,34 @@ $(GOB_LOG): $(BNSL) tools/gobnilp/gobnilp.set
 	@mkdir -p $(OUT)
 	cd $(OUT) && $(GOBNILP) -f $(abspath $(BNSL)) -s $(GOB_SET) | tee $(notdir $@)
 
-# 5. two-stage CPT types on the GOBNILP structure
-$(CPT_CSV): $(GOB_LOG) $(RAW)/BN-data.csv $(VARNAMES) scripts/fit_cpt_types.py src/bnjoint/cpt_scores.py src/bnjoint/gobnilp_io.py
-	$(PYTHON) scripts/fit_cpt_types.py --log $(GOB_LOG) --varnames $(VARNAMES) --out $@
-
 # 6. bnlearn hill-climbing structure, for comparison
 $(HC_CSV): $(RAW)/BN-data.csv R/bnlearn_hc.R
 	@mkdir -p $(OUT)
 	Rscript R/bnlearn_hc.R $(RAW)/BN-data.csv $@
+
+# ---------------------------------------------------------------- Phase 1.5
+phase1.5: $(CPT151) $(CMP152)   ## CPT types with the tie rule: GOBNILP (1.5.1) and hc vs Table 2 (1.5.2)
+
+# The Phase 1 structures (GOBNILP log, hc adjacency CSV) are READ but deliberately NOT listed as
+# prerequisites: listing them would let make rebuild them (and so rewrite results/phase1/, the
+# record of what was reported to Jirka) whenever a file further up the chain looks newer.
+#
+# 1.5.1: CPT types on the GOBNILP structure. tee keeps the console output (split and
+# convergence report) next to the CSV as fit-log.txt.
+$(CPT151): $(FIT_DEPS) src/bnjoint/gobnilp_io.py
+	@mkdir -p $(dir $@)
+	$(PYTHON) scripts/fit_cpt_types.py --structure gobnilp --structure-file $(GOB_LOG) \
+	  --varnames $(VARNAMES) --out $@ | tee $(dir $@)fit-log.txt
+
+# 1.5.2: CPT types on the hill-climbing structure, then the comparison with Table 2
+$(CPT152): $(FIT_DEPS) src/bnjoint/structures.py
+	@mkdir -p $(dir $@)
+	$(PYTHON) scripts/fit_cpt_types.py --structure hc --structure-file $(HC_CSV) \
+	  --varnames $(VARNAMES) --out $@ | tee $(dir $@)fit-log.txt
+
+$(CMP152): $(CPT152) $(TABLE2) scripts/compare_with_table2.py src/bnjoint/structures.py
+	$(PYTHON) scripts/compare_with_table2.py --ours $(CPT152) --reference $(TABLE2) --out $@ \
+	  | tee $(dir $@)comparison-log.txt
 
 # ---------------------------------------------------------------- checks
 test-data24:   ## GOBNILP smoke test on Jirka's 23-variable example (seconds)

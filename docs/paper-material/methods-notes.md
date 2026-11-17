@@ -37,8 +37,12 @@ logistic regression (MLR; each parent dummy-coded with state −1 as reference; 
 parameters) and ordinal logistic regression (OLR; logit link, parents entering as their numeric
 values −1/0/+1; (k − 1) + n parameters). OLR is only considered for nodes with at least one
 parent. MLR and OLR were fitted with the Python package statsmodels (`MNLogit`; `OrderedModel`
-with BFGS). The type with the highest BIC was selected per node.
-(Tie handling is revised in step 1.5.1.)
+with BFGS). The type with the highest BIC was selected per node. [Revised in 1.5.1:] Scores
+within 10⁻⁶ of the best were treated as tied, and ties were resolved in favour of the simpler
+type in the order STD, OLR, MLR. This matters for nodes with at most one parent, where STD and
+MLR are the same model and their computed BICs differ only by floating-point error (at most
+6.8 × 10⁻¹³ here). For every MLR and OLR fit we recorded the optimizer's convergence flag; all
+fits converged.
 
 ## Hill-climbing comparison [Phase 1]
 
@@ -51,3 +55,11 @@ which is how the structure in [vomlel2026](../references.md#vomlel2026) was obta
 All stages are driven by a Makefile (`make phase1`); the scoring and structure-learning
 programs are deterministic for a given input. Source code, settings files and checksums of the
 original data are kept in the project repository.
+
+## Reproducing the published model [1.5.2]
+
+To validate the CPT-type fitting, we applied it to the structure learned by bnlearn's `hc`
+(see the paragraph above), whose parent sets coincide with those of the published model
+([vomlel2026](../references.md#vomlel2026), Table 2) for all 44 nodes. The same fitting and
+selection procedure as above was used, unchanged, and its choice of CPT type per node was
+compared with Table 2.

@@ -3,6 +3,8 @@
 **What it does.** Reproduces the Phase 1 two-stage baseline from `data/raw/BN-data.csv`:
 (1) the exact BIC-optimal structure with STD tables (scoring2a + GOBNILP), (2) the best CPT
 type per node on that structure, (3) the bnlearn hill-climbing structure for comparison.
+Since step 1.5.1, `make phase1` runs stages 1–4 and 6 only; stage 5 is `make phase1.5`
+(below), so the reported Phase 1 CSV is never regenerated.
 Results and their interpretation: [`docs/reports/phase-1.md`](../reports/phase-1.md).
 
 ## Data flow, stage by stage
@@ -24,10 +26,12 @@ The Make rules are in the `Makefile` under "Phase 1"; their numbers match these.
    is saved as `gobnilp-std-run.log` (via `tee`, which shows output on screen and writes it to
    a file at once). GOBNILP also writes `adjmat.txt`/`.dot` (the DAG) and `pdagadjmat.txt`/`.dot`
    (its CPDAG) into the folder it runs in; in the matrices, row = parent and column = child.
-5. **CPT types** — `scripts/fit_cpt_types.py`: reads the parent sets from the log
-   (`bnjoint.gobnilp_io.parse_parent_sets`), then fits STD, MLR and OLR per node
-   (`bnjoint.cpt_scores.fit_cpt_types`; guide: [cpt-scoring.md](cpt-scoring.md)) and writes
-   `cpt-type-summary.csv`.
+5. **CPT types** — now `make phase1.5`: `scripts/fit_cpt_types.py` reads the parent sets from
+   the log (`bnjoint.gobnilp_io.parse_parent_sets`), fits STD, MLR and OLR per node with the
+   tie rule (`bnjoint.cpt_scores.fit_cpt_types`; guide: [cpt-scoring.md](cpt-scoring.md)) and
+   writes `results/phase1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv`. The Phase 1 file
+   `results/phase1/cpt-type-summary.csv` was made by this stage on Sep 6 with the old winner
+   rule; it is kept, superseded.
 6. **hc** — `Rscript R/bnlearn_hc.R`: bnlearn `hc(score = "bic")` with `set.seed(1)`; writes the
    adjacency matrix `bnlearn-hc-dag.csv`.
 
@@ -50,6 +54,7 @@ The final line `make phase1` prints is GOBNILP's `objective value`; for Phase 1 
 ```bash
 source .venv/bin/activate
 make phase1                       # does only what is out of date
+make phase1.5                     # CPT types (stage 5) on both structures + Table 2 check
 make -B phase1                    # force everything (~20 min)
 make phase1 PROCESSED=/tmp/p OUT=/tmp/r   # rebuild elsewhere, leaving committed files alone
 make test-data24                  # 5-second GOBNILP check on Jirka's small example

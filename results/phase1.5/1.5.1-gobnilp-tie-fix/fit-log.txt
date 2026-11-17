@@ -1,0 +1,4 @@
+Structure (gobnilp) from results/phase1/gobnilp-std-run.log: 44 nodes, 69 arcs
+MLR fits converged: 44/44
+OLR fits converged: 43/43 (nodes without parents not fitted)
+Wrote results/phase1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv: STD 16, MLR 24, OLR 4

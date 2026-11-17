@@ -25,8 +25,9 @@ make test-data24     # GOBNILP works: objective value -3411.597651
 
 | Phase | Command | Output | Report |
 |---|---|---|---|
-| 1: two-stage baseline (exact GOBNILP structure, CPT types, hc comparison) | `make phase1` (~20 min from scratch; prints `objective value -64837.738627`) | `results/phase1/` | [`docs/reports/phase-1.md`](docs/reports/phase-1.md) |
-| 1.5 onwards | added as each step is done | | `docs/reports/` |
+| 1: two-stage baseline structures (exact GOBNILP structure, hc comparison) | `make phase1` (~20 min from scratch; prints `objective value -64837.738627`). Rewrites the reported `results/phase1/` files, so for a check run it into scratch: `make -B phase1 PROCESSED=scratch/p OUT=scratch/r` | `results/phase1/` (as reported to Jirka) | [`docs/reports/phase-1.md`](docs/reports/phase-1.md) |
+| 1.5.1–1.5.2: CPT types with the tie rule on the GOBNILP and hc structures; hc vs. the paper's Table 2 | `make phase1.5` (~10 s; prints 16/24/4 for GOBNILP and 19/22/3 with 44/44 nodes matching Table 2) | `results/phase1.5/` | [`docs/reports/1.5.1-1.5.2.md`](docs/reports/1.5.1-1.5.2.md) |
+| later steps | added as each step is done | | `docs/reports/` |
 
 `make help` lists all targets. Other checks: `make provenance` (Jirka's R code reproduces
 `BN-data.csv`), `make lint`, `make inventory` (every tracked file is documented).

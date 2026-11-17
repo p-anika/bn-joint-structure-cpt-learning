@@ -14,12 +14,13 @@ Each fact lives in one place; everything else links to it.
 | `paper-material/methods-notes.md` | Paper-style paragraphs on what was done (data, settings, software), for the Methods section. |
 | `code-guide/ARCHITECTURE.md` | Map of how modules, scripts, Make targets and data connect. Start here. |
 | `code-guide/phase1-pipeline.md` | Guide to the Phase 1 pipeline (`make phase1`). |
-| `code-guide/cpt-scoring.md` | Guide to STD/MLR/OLR scoring (`src/bnjoint/cpt_scores.py`). |
+| `code-guide/cpt-scoring.md` | Guide to STD/MLR/OLR scoring, the tie rule and the Table 2 comparison (`cpt_scores.py`, `structures.py`, `make phase1.5`). |
 | `code-guide/scoring2a.md` | What de Campos's `scoring2a.c` does, including its pruning. |
 | [`explainers/`](explainers/README.md) | Beginner concept guides, with an index in reading order. |
 | `reports/phase-1.md` | Phase 1 report (seen by Jirka; corrected only with dated notes). |
 | `reports/1.5.0a.md` | Step 1.5.0a: audit of the old Markdown files. |
 | `reports/1.5.0b.md` | Step 1.5.0b: repo reorganization and data verification. |
+| `reports/1.5.1-1.5.2.md` | Steps 1.5.1–1.5.2: tie rule and convergence check; reproducing Table 2 on the hc structure. |
 | [`theory/`](theory/README.md) | Proofs and derivations (from Phase 3). |
 | [`reading-notes/`](reading-notes/README.md) | Notes on papers. |
 | `tasks/` | Not in git: scratch plans, written only for steps that need approval. |

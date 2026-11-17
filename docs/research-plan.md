@@ -473,25 +473,26 @@ Every decision, run and result should be findable in the repo. If it is not writ
 
 ```
 bn-joint-structure-cpt-learning/
-  README.md  CLAUDE.md  requirements.txt  Makefile  .gitignore  .gitattributes
-  data/raw/              Jirka's original files (read-only)
-  data/processed/        files derived by scripts (.dat, .scores, .bnsl)
+  README.md  CLAUDE.md  pyproject.toml  requirements*.txt  Makefile  .gitignore  .gitattributes
+  data/raw/              Jirka's original files, exactly as received (read-only, sha256 in README)
+  data/reference/        published reference data, e.g. Kybernetika Table 2 (read-only)
+  data/processed/        files derived by scripts (.dat, .scores, .bnsl), regenerable
   src/bnjoint/           Python package: io, cpt_scores, structures, gobnilp_io, ...
   scripts/               thin command-line entry points, one job each
-  R/                     R scripts: compare_structures.R, cv_predict.R, ...
+  R/                     R scripts
   tools/                 scoring2a.c + build notes, gobnilp.set
   tests/                 pytest tests mirroring src/bnjoint
-  results/<experiment>/  outputs + README saying which command and commit made them
+  results/<phase>/<experiment>/  outputs + README saying which command and commit made them
   docs/
-    research-plan.md     this plan, exported as Markdown
-    setup.md             how to build SCIP, GOBNILP, scoring2a; package versions
+    research-plan.md     this plan, exported as Markdown (master copy is the Claude doc)
+    setup.md             how to build everything; software versions (the only place for them)
     decision-log.md  experiment-log.md  paper-claims.md
-    paper-material/      methods-notes.md, results-notes.md (paper-style paragraphs)
-    code-guide/          one walkthrough per module or script: what, how, why
+    paper-material/      methods-notes.md (paper-style Methods paragraphs; results stay in reports)
+    code-guide/          ARCHITECTURE.md + one guide per pipeline stage
     explainers/          beginner concept guides + README index
-    reports/             one report per step
-    tasks/               one plan per step, approved before coding
-    theory/  reading-notes/  archive/
+    reports/             one report per prompt or phase: THE place results are written up
+    theory/  reading-notes/
+    tasks/               scratch plans for approval only; git-ignored, deleted after merge
 ```
 
 The four logs, and what one entry looks like:
@@ -541,13 +542,12 @@ Split of roles:
 
 **The loop for every step in this plan:**
 
-1. **Start (Claude Code).** Open a session for the next group of steps, usually everything up to the next email, using the prompt in "Handing the plan to Claude Code".
-2. **Plan (Claude Code, approved by you).** It writes `docs/tasks/<step>.md`: goal, inputs, outputs, files, and how it will check the work. You read the plan and approve it before any code is written.
-3. **Build (Claude Code).** One step at a time, on a branch, tests first. It stops after each step for you to review.
-4. **Review (you, 10–20 minutes per step).** Run the tests yourself and hand-check one number. Skim the diff and ask "why" about anything surprising.
-5. **Record and explain (Claude Code).** It updates the four logs, writes or updates the beginner explainer for anything new, and writes a short step report in `docs/reports/`. Then it commits, pushes and merges.
-6. **Understand (you, with chat).** Read the explainer and the step report. Bring every question to this chat. The repo syncs to this Project, so chat can read the same files.
-7. **Report (chat).** At an email point, bring the reports here to sanity-check the results and draft the email. Rewrite it in your voice, then send.
+1. **Start (Claude Code).** Paste the prompt for the next group of steps, usually everything up to the next email, from `phase-1.5-prompts.md` in the Claude Project.
+2. **Work (Claude Code).** It runs through the steps on a local branch, writing tests first and checking its own results against the expected values. It stops early only if a result is unexpected, or if a step deletes or moves files. In that case it writes a plan in the git-ignored `docs/tasks/` folder for you to approve.
+3. **Checkpoint (you, 10–20 minutes).** One stop per prompt, with the headline numbers against what was expected, the riskiest assumptions, and one independent hand-check when there are new numbers. The documentation is already written by this point.
+4. **Approve (you).** Claude Code squash-merges into `main` as one commit per step, pushes, and deletes the branch and the task file.
+5. **Understand (you, with chat).** Read the report and any new explainers, and bring questions to chat. Now and then, ask chat to check an important explainer for accuracy.
+6. **Report (chat).** At an email point, bring the summary to chat to draft the email. Rewrite it in your voice, then send.
 
 **Rules to put in `CLAUDE.md`,** which Claude Code reads automatically:
 
