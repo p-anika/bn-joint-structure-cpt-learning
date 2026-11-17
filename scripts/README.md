@@ -12,5 +12,4 @@ through `make` (see the root README) rather than by hand.
 | `compare_with_table2.py` | Compare our per-node parents and CPT types with the paper's Table 2; write `table2-comparison.csv` | `make phase1.5` |
 | `check_inventory.py` | List tracked files that no README mentions | `make inventory` |
 
-All are originals written by us. `run_gobnilp_pipeline.sh` was replaced by the Makefile in
-step 1.5.0b (decision log).
+All are originals written by us.

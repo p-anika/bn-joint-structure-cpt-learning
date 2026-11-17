@@ -72,12 +72,11 @@ All functions have docstrings with the formulas and an example; this is the over
 - **Parent sets compared as sets** with Table 2: the order in which parents are listed means
   nothing.
 
-## Known issues and open questions
+## Open questions
 
 - **Parent coding for OLR** (raw values −1/0/1) is still to be confirmed with Jirka (decision log
   entry 8). Step 1.5.2 reproduces Table 2 exactly with it, which is strong evidence that it is
   what the paper did.
-- Fixed in step 1.5.1: the tie bug (was 10/30/4, now 16/24/4) and the missing convergence check.
 
 ## How to run and change it
 
@@ -90,5 +89,5 @@ python scripts/fit_cpt_types.py --structure gobnilp --structure-file other.log -
 See `--help`. To change a formula, change it here only and run `make test`.
 `tests/test_phase1_regression.py` then tells you whether a reported number moved (the Phase 1
 BIC columns, the 1.5.1 and 1.5.2 CSVs, or the match with Table 2); a moved number needs a
-decision log entry and a new results folder, never an edited CSV. To change the tie
+decision log entry, a new results folder and a History line in the report, never an edited CSV. To change the tie
 tolerance or order, edit `config.py` only.

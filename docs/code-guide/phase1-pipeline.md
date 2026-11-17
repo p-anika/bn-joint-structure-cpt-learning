@@ -3,8 +3,8 @@
 **What it does.** Reproduces the Phase 1 two-stage baseline from `data/raw/BN-data.csv`:
 (1) the exact BIC-optimal structure with STD tables (scoring2a + GOBNILP), (2) the best CPT
 type per node on that structure, (3) the bnlearn hill-climbing structure for comparison.
-Since step 1.5.1, `make phase1` runs stages 1–4 and 6 only; stage 5 is `make phase1.5`
-(below), so the reported Phase 1 CSV is never regenerated.
+`make phase1` runs stages 1–4 and 6; stage 5 is `make phase1.5`, which writes to
+`results/phase1.5/`.
 Results and their interpretation: [`docs/reports/phase-1.md`](../reports/phase-1.md).
 
 ## Data flow, stage by stage
@@ -29,9 +29,7 @@ The Make rules are in the `Makefile` under "Phase 1"; their numbers match these.
 5. **CPT types** — now `make phase1.5`: `scripts/fit_cpt_types.py` reads the parent sets from
    the log (`bnjoint.gobnilp_io.parse_parent_sets`), fits STD, MLR and OLR per node with the
    tie rule (`bnjoint.cpt_scores.fit_cpt_types`; guide: [cpt-scoring.md](cpt-scoring.md)) and
-   writes `results/phase1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv`. The Phase 1 file
-   `results/phase1/cpt-type-summary.csv` was made by this stage on Sep 6 with the old winner
-   rule; it is kept, superseded.
+   writes `results/phase1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv`.
 6. **hc** — `Rscript R/bnlearn_hc.R`: bnlearn `hc(score = "bic")` with `set.seed(1)`; writes the
    adjacency matrix `bnlearn-hc-dag.csv`.
 

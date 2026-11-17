@@ -1,6 +1,9 @@
 # docs/: project documentation
 
-Each fact lives in one place; everything else links to it.
+Each fact lives in one place; everything else links to it. Documents describe the current
+state; git keeps old versions. The history of what changed and why is in `decision-log.md` and
+`experiment-log.md` (append-only), in each report's "What we tried that didn't work" section,
+and, for reported numbers that changed, in the report's History section.
 
 | Path | What it holds |
 |---|---|
@@ -17,7 +20,7 @@ Each fact lives in one place; everything else links to it.
 | `code-guide/cpt-scoring.md` | Guide to STD/MLR/OLR scoring, the tie rule and the Table 2 comparison (`cpt_scores.py`, `structures.py`, `make phase1.5`). |
 | `code-guide/scoring2a.md` | What de Campos's `scoring2a.c` does, including its pruning. |
 | [`explainers/`](explainers/README.md) | Beginner concept guides, with an index in reading order. |
-| `reports/phase-1.md` | Phase 1 report (seen by Jirka; corrected only with dated notes). |
+| `reports/phase-1.md` | Phase 1 report: the two-stage baseline (exact and hill-climbing structures, CPT types). |
 | `reports/1.5.0a.md` | Step 1.5.0a: audit of the old Markdown files. |
 | `reports/1.5.0b.md` | Step 1.5.0b: repo reorganization and data verification. |
 | `reports/1.5.1-1.5.2.md` | Steps 1.5.1–1.5.2: tie rule and convergence check; reproducing Table 2 on the hc structure. |

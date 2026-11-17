@@ -1,233 +1,96 @@
-# Baseline reproduction notes (Phase 1)
+# Phase 1 report: the two-stage baseline
 
-> **Note (2026-11-15).** This file was `docs/baseline_reproduction_notes.md` until step 1.5.0a;
-> it was moved here unchanged. Jirka has seen the original, so mistakes are fixed with dated
-> **Correction** notes placed next to the original text, never by rewriting it. Each
-> correction is explained in `docs/reports/1.5.0a.md`.
+Phase 1 ran Aug–Sep 2026 and was reported to Jirka on Sep 7, 2026. Status: **complete**.
+Decisions behind it: `docs/decision-log.md` entries 2–10 and 19–20. Runs:
+`docs/experiment-log.md`. How to run it: [`docs/code-guide/phase1-pipeline.md`](../code-guide/phase1-pipeline.md).
 
-> **Note (2026-11-15, step 1.5.0b): files moved.** The paths in this report are the
-> September paths. Contents are unchanged (moved with `git mv`; every derived file was rebuilt
-> from scratch and came out identical, see `docs/reports/1.5.0b.md`). New locations:
->
-> | Path in this report | Now |
-> |---|---|
-> | `data/BN-data.csv` | `data/raw/BN-data.csv` |
-> | `data/bn-data-44.dat`, `data/bn-data-44-bic.scores` (and the `-fixed.bnsl`, varnames files) | `data/processed/…` (same names) |
-> | `results/gobnilp-std-run.log`, `results/cpt-type-summary.csv`, `results/bnlearn-hc-dag.csv` | `results/phase1/…` (same names) |
-> | `src/scoring2a.c`, `src/gobnilp.set` | `tools/scoring2a/scoring2a.c`, `tools/gobnilp/gobnilp.set` |
-> | `scripts/bnlearn_hc.R` | `R/bnlearn_hc.R` |
-> | `python scripts/convert_data.py`, `bash scripts/run_gobnilp_pipeline.sh`, `python scripts/fit_cpt_types.py`, `Rscript scripts/bnlearn_hc.R` | all four: `make phase1` (`run_gobnilp_pipeline.sh` was replaced by the Makefile) |
+## Goal
 
-## Reproducibility details
+Reproduce the two-stage method of [Vomlel, Kybernetika 2026](../references.md#vomlel2026) on its
+data, with one change: learn the structure by **exact** search instead of hill-climbing.
 
-> **Note (2026-11-15, step 1.5.0b):** the software versions, the build details of GOBNILP and
-> scoring2a, and the step-by-step run instructions that stood here (sections "Reproducibility
-> details" and "How to reproduce these results from scratch") now live in one place each:
-> versions in [`docs/setup.md`, "Versions in use"](../setup.md#versions-in-use), running the
-> pipeline in [`docs/code-guide/phase1-pipeline.md`](../code-guide/phase1-pipeline.md)
-> (`make phase1`). The removed text can be read with `git show a183df9:docs/reports/phase-1.md`.
-> **Correction (2026-11-15):** that text said `scoring2a.c` came in Jirka's Aug 5 email; it came
-> in his **Jul 8, 2026** email ("unix files.zip"), and the Aug 5 email sent only `BN-data.csv`
-> (confirmed by Anika; decision log entry 14). No result or finding was changed; the finding
-> below is kept as it was.
+1. Learn one network structure, assuming every node uses a standard table (STD).
+2. Keep that structure fixed. For each node, compare the BIC of STD, multinomial logistic
+   regression (MLR) and ordinal logistic regression (OLR), and keep the best.
 
-- Randomness: `scoring2a` and GOBNILP's exact search are deterministic given
-  the same input file -- no seed needed. `bnlearn::hc()` in
-  `scripts/bnlearn_hc.R` was run with `set.seed(1)` before calling
-  `hc()`. Confirmed reproducible: re-running the script produced an
-  identical structure (same 66-arc model string, same penalization
-  coefficient) both times.
+BIC = log-likelihood − (log N / 2) × (number of free parameters), natural log, higher is
+better (paper eq. 7/9). This is the opposite sign of the textbook "−2·LL + k·log N"; both give
+the same ranking. The three CPT types: [explainer 03](../explainers/03-cpt-types.md).
 
-## File map -- where each claim in this document comes from
-| Claim | Source file |
-|---|---|
-| Full 44-variable STD/MLR/OLR structure + winners | `results/cpt-type-summary.csv` |
-| GOBNILP's exact structure + solve statistics | `results/gobnilp-std-run.log` |
-| bnlearn's hill-climbed structure | `results/bnlearn-hc-dag.csv` (arcs) + console output pasted below |
-| Local BIC scores per candidate family (pre-GOBNILP) | `data/bn-data-44-bic.scores` |
-| Raw survey data (44 vars, -1/0/1 coded) | `data/BN-data.csv` (sent by Jirka, email Aug 5 2026) |
+## Method
 
-## Background
-Phase 1's goal: reproduce the "two-stage" result from the Kybernetika paper.
-"Two-stage" means: first learn one BN structure (which variable depends on
-which) assuming every node uses a plain lookup-table CPT, then -- with that
-structure now frozen -- go back and check, node by node, whether swapping in
-a Multinomial Logistic Regression (MLR) or Ordinal Logistic Regression (OLR)
-representation gets a better BIC score than the table did. BIC (Bayesian
-Information Criterion) rewards a model for fitting the data well but
-penalizes it for having more parameters -- so a fancier model only "wins" if
-its better fit is worth more than the complexity it costs.
+- **Data:** `data/raw/BN-data.csv`, 1661 rows × 44 variables (a1–a30, d1–d14), values −1/0/1,
+  as sent by Jirka on Aug 5, 2026 (decision 2; provenance in `data/raw/README.md`).
+- **Local scores:** de Campos's `scoring2a` with alpha = 1 (the true BIC penalty), at most 9
+  parents, built-in pruning, score `bic` (decision 5, approved by Jirka on Sep 28). What it
+  computes and prunes: [`docs/code-guide/scoring2a.md`](../code-guide/scoring2a.md).
+- **Exact structure search:** GOBNILP on SCIP 10.0.3 + SoPlex 8.0.3 (decision 3; versions in
+  [`docs/setup.md`](../setup.md#versions-in-use)). Parent sets are read from its console log
+  (decision 6).
+- **CPT types:** `bnjoint.cpt_scores` ([code guide](../code-guide/cpt-scoring.md)): STD from
+  counts, MLR with statsmodels `MNLogit` (parents dummy-coded, −1 as reference), OLR with
+  `OrderedModel` (logit, BFGS, parents as raw −1/0/1 values), no OLR for a node without parents
+  (decisions 7–9). Winner: highest BIC, where scores within 1e-6 count as tied and a tie goes to
+  STD, then OLR, then MLR (decision 55).
+- **Comparison structure:** bnlearn `hc(score = "bic")` with default settings after
+  `set.seed(1)` (`R/bnlearn_hc.R`, decision 10). This is the method the paper used (decision 19).
 
-The paper's own formula (their eq. 7/9) is:
-    BIC = log-likelihood - (log(N)/2) * (number of parameters)
-Higher is better under this convention (this is the opposite sign from the
-"-2*LL + k*log(n)" convention used in most stats textbooks -- don't mix the
-two, they'll give the same *ranking* but look like different numbers).
+## Results
 
-## Environment gotchas discovered while running this (useful if re-running later)
+### Exact structure (GOBNILP)
 
-> **Note (2026-11-15, step 1.5.0b):** the gotchas listed here (GOBNILP on the PATH, the `-f`
-> flag, the ignored `gobnilp.set` parameter and `bi.mat`, the repo name) now live in
-> [`docs/setup.md` §7c–7d](../setup.md#7-scip-and-gobnilp-exact-structure-search) and §2. The
-> original text is in this file's git history.
+File: `results/phase1/gobnilp-std-run.log` (DAG and CPDAG: `results/phase1/adjmat.*`,
+`pdagadjmat.*`).
 
-## Step 1.3 result: GOBNILP structure search
-- Ran: `bash scripts/run_gobnilp_pipeline.sh` (internally:
-  `gobnilp -f bn-data-44-bic-fixed.bnsl -s gobnilp.set`)
-- Status: **optimal solution found, 0.00% gap** -- this is the exact
-  BIC-best structure under standard (table) CPTs, not an approximation.
-- Objective (total BIC across all 44 families): **-64837.74**
-- Total directed arcs in this structure: **69** (summed from per-variable
-  parent counts in `results/cpt-type-summary.csv`)
+- **Optimal solution, gap 0.00 %:** this is the proven BIC-best structure for STD tables, not
+  an approximation.
+- **Objective (total BIC of the 44 families): −64837.738627.**
+- **69 arcs**, at most 2 parents per node (26 nodes with 2 parents, 17 with 1). Exactly one
+  node has no parents: **d11**.
+- Deterministic: scoring2a and GOBNILP need no seed. A rebuild from the raw data reproduces
+  every file byte for byte ([1.5.0b](1.5.0b.md#results), [1.5.1–1.5.2](1.5.1-1.5.2.md#phase-1-rebuild)).
 
-**Note on this number vs. the paper's Figure 4:** the paper's plotted BIC
-values are roughly -58,500 to -59,000, noticeably less negative than mine.
-My best guess why: Figure 4's numbers come from 10-fold cross-validation,
-so each of those runs trained on 90% of the data (~1495 rows) rather than
-the full 1661. Since -58,500 / -64,838 is almost exactly 0.9, that lines up
-with a "less data = less negative log-likelihood penalty" effect. This is a
-hypothesis, not a confirmed explanation -- worth asking Jirka directly
-rather than assuming it's settled.
+### CPT types on the exact structure
 
-> **Correction (2026-11-15):** confirmed. Jirka wrote on Sep 28, 2026: "I can confirm that the
-> BIC, number of parameters and log-likelihood in Figure 4 come from the 10-fold
-> cross-validation." So the Figure 4 numbers and our full-data −64837.74 are not directly
-> comparable. (The 0.9 ratio above is still only a rough consistency check, not a derivation.)
+File: `results/phase1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv` (made in step 1.5.1 with the
+tie rule; [report](1.5.1-1.5.2.md#151-gobnilp-structure)).
 
-**Structural note:** my learned graph has exactly one variable with zero
-parents (D11). Interestingly, the paper's own structure (their Table 2/8)
-also has exactly one zero-parent variable, though it's a different one
-(A3). Same count, different specific root -- a small but reassuring sign
-that the two structures, while not identical, aren't wildly different in
-character. Max parents-per-node in mine is 2, matching the paper's own
-structure (their Table 2 never shows more than 2 parents either) -- so the
-`alpha`/`palim` choice from step 1.2, while still not confirmed against
-whatever the paper actually used, at least produced a structure of similar
-"shape."
+| | STD | MLR | OLR |
+|---|---|---|---|
+| Our exact structure | **16** (36 %) | **24** (55 %) | **4** (9 %) |
+| Paper, Table 2 (hc structure) | 19 (43 %) | 22 (50 %) | 3 (7 %) |
 
-## Step 1.4 result: STD/MLR/OLR split
-- Paper's reported split: 19 STD (43%), 22 MLR (50%), 3 OLR (7%)
-- Mine: **10 STD (23%), 30 MLR (68%), 4 OLR (9%)**
+- STD wins only on the root d11 and on 15 of the 17 one-parent nodes. The other two one-parent
+  nodes, d7 and d10, choose OLR.
+- Every 2-parent node chooses MLR (24) or OLR (2: a20, d8), never STD, as in the paper. This is a
+  property of the data, not a rule. STD always fits at least as well, but with 2 parents it pays
+  for 18 parameters against MLR's 10. It wins only if the parents interact strongly, and here
+  they don't ([explainer 03](../explainers/03-cpt-types.md#5-common-confusions)).
+- With 0 or 1 parents, STD and MLR are the same model and their BICs differ only by rounding
+  (≤ 4.5e-13). That is why the tie rule is needed
+  ([explainer 04](../explainers/04-one-parent-mlr-equals-std.md)).
+- The two-stage total, the sum of the best BIC per node, is −64249.31.
 
-Noticeably more MLR-heavy than the paper's split. Best guess why: this
-almost certainly traces back to the structure itself, not the CPT-fitting
-step. The paper used `bnlearn`'s hill-climbing (`hc()`) to find its
-structure (confirmed in Jirka's Aug 12 email), which is a *greedy* search --
-it's not guaranteed to find the true BIC-optimal graph, just a local
-optimum. My structure came from GOBNILP's exact search, which **is**
-guaranteed optimal. Different structures mean different actual parent
-sets for each node, which means each node's STD-vs-MLR-vs-OLR comparison
-is being run on a different "family" than in the paper -- so a different
-overall split isn't surprising. Step 1.6 (the `bnlearn` cross-check) helped
-pin down how much of this gap is "different structure" vs. something else
-(see below).
+### Hill-climbing structure (bnlearn)
 
-> **Correction (2026-11-15):** the split was 10/30/4 because of a tie-breaking bug, not only
-> because of the structure. Six nodes with 0 or 1 parents (a13, a15, d6, d11, d12, d13) were
-> labelled MLR even though their STD and MLR scores in `results/cpt-type-summary.csv` differ
-> by at most 4.5e-13, which is floating-point noise (see the "quirk" section below). The script
-> picked whichever number happened to be larger. Under the project's tie rule (scores within
-> 1e-6 are tied; ties go to STD, then OLR, then MLR), those six become STD. Applying that rule
-> to the existing CSV gives **16 STD, 24 MLR, 4 OLR**. The official corrected split comes from
-> re-running the fixed script in step 1.5.1; see `docs/reports/1.5.1.md`. The remaining gap to
-> the paper's 19/22/3 is what step 1.5.2 (fitting on the hc structure) tests.
->
-> **Update (2026-11-16):** step 1.5.1 re-ran the fixed script: **16 STD / 24 MLR / 4 OLR**, with
-> BIC values identical to this report's and the same six nodes changed. File:
-> `results/phase1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv` (supersedes
-> `results/phase1/cpt-type-summary.csv`). Step 1.5.2 fitted the hc structure and reproduced the
-> paper's 19/22/3 with the same type on every node, so the remaining gap is entirely due to the
-> different structure. Details: [`docs/reports/1.5.1-1.5.2.md`](1.5.1-1.5.2.md).
+File: `results/phase1/bnlearn-hc-dag.csv` (adjacency matrix, row = parent, column = child).
 
-## An important quirk I noticed: STD and MLR sometimes tie exactly
-> **Note (2026-11-16):** the full argument, with a worked example, is in
-> [explainer 04](../explainers/04-one-parent-mlr-equals-std.md).
-Look at the raw fit_cpt_types.py output for any node with **1 or fewer
-parents** -- e.g. `a3: STD=-1142.51 MLR=-1142.51`. This isn't a coincidence
-or a bug. Here's why it happens, worth understanding rather than just
-noting: MLR represents a parent by "dummy" variables, one per non-reference
-state. For a single parent with 3 states, that's 2 dummy variables plus an
-intercept -- exactly enough free parameters to reproduce *any* possible
-table of conditional probabilities for that parent, with no
-loss of flexibility at all. In other words, for a 1-parent (or 0-parent)
-node, MLR isn't an *approximation* of the table CPT -- it's mathematically
-capable of representing the exact same distribution, using the exact same
-number of parameters. So STD and MLR are actually the same model in this
-case, just written two different ways, and will always tie (up to tiny
-floating-point noise from however MLR's iterative fitting converges).
+- 44 nodes, **66 directed arcs**, 0 undirected, average branching factor 1.50 (at most 2
+  parents: 23 nodes with 2, 20 with 1). Exactly one node has no parents: **a3**.
+- Repeatable: two runs gave the same 66-arc model and the same penalization coefficient.
+- **Same BIC everywhere:** bnlearn printed a penalization coefficient of 3.707588 = log(1661)/2.
+  So bnlearn, scoring2a and our Python code all use log(N)/2 per parameter (paper eq. 7/9),
+  although they were implemented independently.
+- It differs from the exact structure: 66 vs 69 arcs, and some arcs point the other way. For
+  example, GOBNILP has a4 → a3, while hc has a3 → a4. Hill-climbing is greedy and can stop at a
+  local optimum; GOBNILP's result is proven optimal. The CPDAG comparison of the two is step 1.5.3.
+- Its parent sets are **exactly those of the paper's Table 2**, and our CPT-type fitting on it
+  gives the paper's types on all 44 nodes, 19/22/3 (step 1.5.2,
+  [report](1.5.1-1.5.2.md#152-hc-structure-vs-table-2)). So the split difference in the table
+  above comes entirely from the different structure.
 
-Practically, this means: which one gets reported as the "winner" for
-1-parent nodes can flip between STD and MLR based on floating-point noise
-alone, not a real modeling difference. This won't happen for 2+-parent
-nodes (dummy-coding two 3-state parents needs 4 dummy columns, but MLR only
-gets `n*(k-1) = 2*2 = 4`... actually double check this per-node, in general
-whenever a node has 2+ parents, MLR's parameter budget is smaller than a
-full table would need, so it's a genuine, lossy approximation there -- no
-tie is expected or seen for any 2-parent node in this run). This is
-consistent with the paper's own finding (and mine): every multi-parent
-winner was MLR or OLR, never STD -- because STD can only ever *tie* MLR
-for small families, never actually beat it.
+bnlearn's console output:
 
-> **Correction (2026-11-15):** two fixes to this paragraph.
-> 1. *The unfinished sentence.* With k = 3 states and n = 2 parents, STD has
->    (k−1)·k^n = 2·9 = **18** parameters and MLR has (k−1)·(1 + n(k−1)) = 2·5 = **10**
->    (paper eq. 6 and 12). So for 2+ parents MLR is a restricted model with fewer parameters,
->    not just the table written differently. That part of the paragraph was right.
-> 2. *"STD can only ever tie MLR, never beat it" is wrong for 2+ parents.* STD is the most
->    flexible model for a given parent set, so its log-likelihood is always **at least** MLR's.
->    BIC also subtracts a penalty, and STD's is larger (18 vs 10 parameters). STD therefore wins
->    when its better fit outweighs the extra penalty, for example when the two parents have a
->    strong *interaction* (their combined effect isn't the sum of their separate effects), which
->    MLR can't represent. In this data that simply didn't happen. The *observation* is correct:
->    no 2-parent node chose STD, in our run or in the paper's Table 2
->    (`data/reference/kybernetika-table2.csv`). The *reason* is the data, not a mathematical rule.
-
-## Multi-parent nodes: did all of them use MLR/OLR?
-Yes, matching the paper's claim exactly: scanning every 2-parent family in
-my result, none of them picked STD as the winner -- all went to MLR or
-OLR. All 10 of my STD winners have 0 or 1 parent, same pattern the paper
-reports for its own STD winners.
-
-> **Correction (2026-11-15):** all 10 STD winners have exactly **1** parent. The only 0-parent
-> node, d11, was labelled MLR because of the tie bug described above.
-> **Update (2026-11-16):** with the fix (step 1.5.1) there are 16 STD winners: 15 with one parent
-> and d11 with none. See [`docs/reports/1.5.1-1.5.2.md`](1.5.1-1.5.2.md).
-
-## Max parent count sanity check
-Paper's final structure: max 2 parents per node (their Table 2).
-Mine: also max 2 parents per node. This matches, which is a reasonable
-(though not certain) sign that `alpha=1, palim=9` from step 1.2 isn't
-producing a wildly different kind of structure than whatever was used for
-the paper -- still worth confirming with Jirka directly since the exact
-value was never stated anywhere.
-
-## Step 1.6 result: bnlearn hill-climbing cross-check
-Ran `Rscript scripts/bnlearn_hc.R`. Result: 44 nodes, 66 directed arcs, 0
-undirected arcs, average branching factor 1.50 (i.e. ~1.5 parents per
-variable on average).
-
-**Useful sanity check:** the printed "penalization coefficient" was
-3.707588. This is exactly log(1661)/2 = 3.7076 -- i.e. `bnlearn` is using
-the *same* BIC penalty-weight convention (log(N)/2) as the paper's formula
-(eq. 7/9) and as `scoring2a`. Nice confirmation that all three pieces of
-software agree on what "BIC" means here, even though they're independently
-implemented.
-
-**Comparing structures directly:** GOBNILP's exact-optimal structure (step
-1.3) has 69 total arcs; bnlearn's hill-climbing found 66. Close, but not
-identical -- expected, since hill-climbing is greedy and isn't guaranteed
-to find the true best graph, while GOBNILP's search is exact.
-
-One concrete example of the two disagreeing at the individual-edge level:
-GOBNILP puts A4 as a parent of A3 (`a3: parents=['a4']`); bnlearn's model
-string has `[a4|a3]`, meaning the *reverse* -- A3 as a parent of A4. Same
-two variables, connected either way, just opposite direction. This is a
-nice concrete illustration of exactly the kind of discrepancy predicted
-earlier in these notes (greedy vs. exact search converging to different,
-comparably-good structures) -- not a bug, just a real limitation of
-hill-climbing as a search method.
-
-Full bnlearn console output, preserved here for the record:
 ```
   Bayesian network learned via Score-based methods
   model:
@@ -251,51 +114,60 @@ Full bnlearn console output, preserved here for the record:
   optimized:                             TRUE
 ```
 
-**Overall takeaway for Phase 1:** the pipeline works end-to-end and is
-internally consistent (same BIC convention everywhere, sensible
-parent-count patterns matching the paper's own structure), and the
-remaining numeric differences from the paper's exact figures are
-explained by known, reasonable causes (exact vs. greedy search;
-full-dataset vs. 10-fold-cross-validation numbers) rather than bugs in
-this reproduction.
+### Comparison with the paper
 
-## Discrepancies and best guesses why
-- Overall split (23/68/9 mine vs. 43/50/7 paper) -- most likely explained
-  by GOBNILP exact search vs. paper's `bnlearn` hill-climbing producing
-  different structures (69 vs. 66 arcs, at least one confirmed reversed
-  edge -- see Step 1.6).
-- STD/MLR near-ties on 0- and 1-parent nodes are a mathematical
-  equivalence, not a real discrepancy -- see the quirk section above.
-- Total BIC magnitude (-64838 mine vs. ~-58500 to -59000 paper) -- likely
-  explained by the paper's numbers coming from 10-fold cross-validation
-  (90% of the data per fold) rather than the full dataset; unconfirmed,
-  worth asking.
-- `alpha`/`palim` in scoring2a (step 1.2) -- still unconfirmed by the paper
-  or correspondence; the max-parent-count match above is a reassuring but
-  not conclusive sign these were reasonable choices.
+- **Total BIC.** The paper's Figure 4 shows values of about −58,500 to −59,000, against our
+  −64837.74. Jirka confirmed on Sep 28 that Figure 4 comes from 10-fold cross-validation
+  (decision 20), where each fit uses about 90 % of the rows. So the numbers are not directly
+  comparable (−58,500 / −64,838 ≈ 0.9 is only a rough consistency check).
+- **CPT-type split.** Explained by the structure; see above.
+- **The paper's text vs. its Table 2.** Section 4.3 says "all 17 standard CPTs correspond either
+  to variables with no parents (A3) or to those with just one parent", but Table 2 lists 19 STD
+  nodes, and our step 1.5.2 fit gives 19. The "17" is an inconsistency in the paper (checked by
+  Anika in the PDF).
+- **Structure shape.** Both structures have at most 2 parents per node and exactly one root,
+  though a different one (d11 for GOBNILP, a3 for hc).
 
-> **Correction (2026-11-15)** to this list:
-> - *Split.* Part of the 23/68/9 vs 43/50/7 gap was the tie-breaking bug (see the correction
->   in Step 1.4). With the tie rule the existing numbers give 16/24/4 (36/55/9). Confirmed by re-running
->   the fixed code in step 1.5.1 (2026-11-16); on the hc structure the fixed code gives the
->   paper's 19/22/3 exactly (step 1.5.2). See [`docs/reports/1.5.1-1.5.2.md`](1.5.1-1.5.2.md).
-> - *BIC magnitude.* Confirmed by Jirka (Sep 28, 2026): Figure 4 comes from 10-fold
->   cross-validation.
-> - *Paper's structure.* Confirmed by Jirka (Sep 28, 2026): "The model structure in the
->   Kybernetika paper was learnt using the hc procedure from the R package bnlearn."
->   So the paper never used scoring2a's alpha/palim for its structure. alpha = 1 is the true
->   BIC according to de Campos's note `scoring-how-to-use-it.txt`, and palim = 9 matches
->   Jirka's own example `script-data24-1`.
+## What we tried that didn't work
 
-## Phase 1 status: COMPLETE
+- **Feeding scoring2a's output straight to GOBNILP.** Our GOBNILP build (current version,
+  commit `5441edf`) rejected the `.scores` file. Its reader needs two extra lines first: the
+  variable names and `SCORES START`. We found this in GOBNILP's example
+  `scores/chest_100_1_3.bnsl`, which Jirka pointed to on Aug 12, and in its reader's source.
+  The fix is `scripts/add_bnsl_header.sh`, which writes the `.bnsl` file (decision 4;
+  [`setup.md` §8](../setup.md#8-the-bnsl-header-gobnilp-needs)).
+- **Running GOBNILP the old way.** `gobnilp file.bnsl`, as in Jirka's `script-data24-1` for his
+  GOBNILP 1.6.3, does not work on this version: the input needs `-f`. Jirka's `gobnilp.set` asks
+  for an adjacency-matrix file, `bi.mat`, through a parameter this version doesn't know. So
+  `bi.mat` is never written, and we read the parent sets from the console log instead
+  (decision 6; [`setup.md` §7d](../setup.md#7-scip-and-gobnilp-exact-structure-search)). We did
+  not rebuild Jirka's GOBNILP 1.6.3 / SCIP 3.2.1, which is from 2016 and hard to build (decision 3).
+- **Choosing the CPT type with a plain "highest BIC wins" (the tie bug).** For 0-/1-parent nodes,
+  STD and MLR are the same model, so their BICs differ only by about 1e-13 of rounding. The first
+  version of `fit_cpt_types.py` let that noise decide: six nodes (a13, a15, d6, d11, d12, d13) got
+  MLR. That gave the 10/30/4 split reported in September. It was found in the step 1.5.0a audit
+  and fixed in step 1.5.1 with the 1e-6 tie rule (decision 55). The September write-up also
+  explained the STD–MLR ties correctly for 0–1 parents, but wrongly concluded that STD can
+  "only ever tie MLR, never beat it". That is false for 2+ parents, where STD can win when the
+  parents interact.
+- **Explaining the gap to the paper by exact vs. greedy search alone.** In September we put the
+  whole difference from the paper's split down to GOBNILP's structure differing from the
+  paper's. Part of it was the tie bug (above). The rest is indeed the structure: the paper's
+  structure came from bnlearn hc (Jirka, Sep 28; decision 19), and fitting our code on the hc
+  structure reproduces Table 2 exactly (step 1.5.2). Until Jirka's answer, we also didn't know
+  which scoring2a settings "the paper used". In fact the paper used none, because its structure
+  came from hc (decision 5).
 
-## Open questions (added 2026-11-15)
+## History
 
-- **Possible inconsistency in the paper's text (unverified).** The old Phase 1 plan noted that
-  the Kybernetika paper says "19 standard CPTs" and, in an adjacent sentence, "all 17 standard
-  CPTs correspond to…". This hasn't been re-checked against the PDF (it isn't in the repo).
-  Table 2 (`data/reference/kybernetika-table2.csv`) has 19 STD rows. Worth re-reading before
-  quoting the paper; probably not worth an email question on its own. **Update (2026-11-16):** verified
-  by Anika: Section 4.3 says "all 17 standard CPTs correspond either to variables with no parents
-  (A3) or to those with just one parent"; Table 2 lists 19, and our step 1.5.2 fit reproduces 19
-  (`docs/reports/1.5.1-1.5.2.md`).
+- 2026-11-16: the CPT-type split reported on Sep 7 was **10 STD / 30 MLR / 4 OLR** (23 / 68 / 9 %),
+  with all 10 STD winners having one parent. That was the tie bug; with the tie rule it is
+  16 / 24 / 4, and the BIC values are unchanged (decisions 55, 63). To read the old report and
+  CSV: `git show 9d80757:docs/reports/phase-1.md` and
+  `git show 9d80757:results/phase1/cpt-type-summary.csv`.
+
+## Open questions
+
+None specific to Phase 1. The open questions that affect it, how OLR codes its parents (for
+Jirka) and the absolute 1e-6 tie tolerance (to watch in Phase 2), are listed once, in
+[the 1.5.1–1.5.2 report](1.5.1-1.5.2.md#open-questions).

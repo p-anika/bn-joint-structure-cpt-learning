@@ -24,9 +24,6 @@ flowchart TD
     raw --> hc --> hcout
 ```
 
-(`results/phase1/cpt-type-summary.csv`, reported Sep 7, was made by the CPT-type stage that now
-lives in `make phase1.5`; it is kept as a historical record, superseded.)
-
 ## Data flow of Phase 1.5 (`make phase1.5`)
 
 ```mermaid
@@ -49,7 +46,7 @@ flowchart TD
 ```
 
 The Phase 1 structures are inputs only: the Makefile reads them without listing them as
-prerequisites, so `make phase1.5` can never rebuild (rewrite) `results/phase1/` (decision 60).
+prerequisites, so `make phase1.5` never rebuilds (rewrites) `results/phase1/` (decision 60).
 
 In words: the data is converted to scoring2a's format; scoring2a computes the BIC of every
 candidate parent set (assuming STD tables); GOBNILP picks the best-scoring acyclic network
@@ -67,7 +64,7 @@ bnlearn's hill-climbing learns the structure the paper used, for comparison.
 | Entry points | `scripts/` (Python, Bash), `R/` | Thin: parse arguments, call the package, print a summary |
 | Other people's programs | `tools/` (source + settings); builds in `~/tools/` | Not edited; binaries not committed |
 | Tests | `tests/` | One file per module, plus regression tests on reported numbers |
-| Outputs | `results/<phase>/<experiment>/` (Phase 1: `results/phase1/`) | One folder per experiment, with a README; reported folders never overwritten |
+| Outputs | `results/<phase>/<experiment>/` (Phase 1: `results/phase1/`) | One folder per experiment, with a README; a superseded result is deleted and named in the report's History |
 | Orchestration | `Makefile` | One target per stage |
 
 ## Python modules and who uses them
@@ -108,7 +105,8 @@ each rule is in the `Makefile`, with comments.
   script, add a Make rule with its inputs as prerequisites, write outputs to a new
   `results/<experiment>/` folder with a README.
 - **Change a formula**: change it only in `cpt_scores.py`, run `make test`. If
-  `test_phase1_regression.py` fails, a reported number changed: that needs a decision log entry,
-  a new results folder and a dated correction, not a quiet update.
+  `test_phase1_regression.py` fails, a reported number changed. Find out why first; if the
+  change is right, it needs a decision log entry, a new results folder and a History line in the
+  report that reported the number (CLAUDE.md).
 - **Move a file**: `git mv`, update `config.py`/Makefile paths, update the folder READMEs, run
   `make inventory` and `make test`.

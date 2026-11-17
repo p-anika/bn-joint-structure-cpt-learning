@@ -37,7 +37,7 @@ logistic regression (MLR; each parent dummy-coded with state −1 as reference; 
 parameters) and ordinal logistic regression (OLR; logit link, parents entering as their numeric
 values −1/0/+1; (k − 1) + n parameters). OLR is only considered for nodes with at least one
 parent. MLR and OLR were fitted with the Python package statsmodels (`MNLogit`; `OrderedModel`
-with BFGS). The type with the highest BIC was selected per node. [Revised in 1.5.1:] Scores
+with BFGS). The type with the highest BIC was selected per node. Scores
 within 10⁻⁶ of the best were treated as tied, and ties were resolved in favour of the simpler
 type in the order STD, OLR, MLR. This matters for nodes with at most one parent, where STD and
 MLR are the same model and their computed BICs differ only by floating-point error (at most

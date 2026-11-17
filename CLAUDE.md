@@ -72,7 +72,7 @@ duplicated docs drift apart and become wrong. Update existing docs rather than a
       ordered index (reading order for a beginner).
 - [ ] **Report**: one per prompt (or per phase), `docs/reports/<id>.md` (1–2 pages): goal, what
       was done, results with exact numbers and the file each comes from, figures/tables,
-      surprises, open questions for Anika or Jirka. This is THE place results are written up.
+      what we tried that didn't work (and why), surprises, open questions for Anika or Jirka. This is THE place results are written up.
 - [ ] **Experiment log** `docs/experiment-log.md`, one row per run that produced a number:
       date | commit hash | exact command | inputs | output folder | headline result | notes.
 - [ ] **Decision log** `docs/decision-log.md`, one entry per choice: date | decision | why |
@@ -100,11 +100,8 @@ R/                   R scripts (bnlearn, CPDAGs, inference)
 tools/scoring2a/     de Campos's scoring2a.c + build notes; tools/gobnilp/gobnilp.set
 tests/               pytest tests mirroring src/bnjoint
 results/<experiment>/  outputs; one folder per experiment, never overwritten silently
-docs/                research-plan, setup, logs, references.md + references.bib, code-guide/,
-                     explainers/, reports/, theory/, reading-notes/, paper-material/
-                     (tasks/ = git-ignored scratch)
-papers/              local PDF copies of papers. Git-ignored, local only: NEVER commit (public
-                     repo, copyrighted). Cite via docs/references.md.
+docs/                research-plan, setup, logs, code-guide/, explainers/, reports/,
+                     theory/, reading-notes/, paper-material/   (tasks/ = git-ignored scratch)
 ```
 Rules:
 - Reusable logic lives in `src/bnjoint/`, never copy-pasted between scripts. One copy of the
@@ -135,8 +132,8 @@ Rules:
   `docs/research-plan.md` is the only plan.
 - Every tracked file must be intentional: listed in its folder's README with what it is, where it
   came from, and whether it is an original, a derived file (and which command regenerates it), or
-  a historical record. Derived files that are not needed are deleted; superseded results that were
-  reported to Jirka are kept but marked "superseded by <file>, <date>" in the folder README.
+  a historical record. Derived files that are not needed are deleted. Superseded results are
+  deleted too (git keeps them); the report's History section names the commit that holds them.
   At the end of every phase, re-run the inventory check (`git ls-files` vs the READMEs) and report
   any file that is not documented.
 - Never commit a regenerated copy of a data file just to prove it matches (e.g. a provenance
@@ -146,9 +143,18 @@ Rules:
   the working tree contains only intentional files.
 - `data/raw/` holds Jirka's original files exactly as received, with a README listing each file,
   the email date it came from, and its SHA-256 checksum. No compiled binaries in git.
-- Never silently rewrite a result that was already reported (to Jirka or in a report). Correct it
-  with a dated note, e.g. "Correction (2026-11-20): the split was 10/30/4 because of a tie-breaking
-  bug; corrected to 16/24/4, see docs/reports/1.5.1.md."
+- Research history is content, not clutter, and is NEVER deleted: what was tried, what failed,
+  dead ends, bugs found, surprising results, and why the approach changed. It lives in the
+  experiment log (every run, including failed ones), the decision log (rejected alternatives and
+  why), and a `## What we tried that didn't work` section in each report, written as a clear
+  narrative. Before removing any old note, move the research fact it records into one of these.
+- Documents describe the CURRENT state, written cleanly: no inline correction notes, no
+  "update:" paragraphs about fixes to the documents themselves. Git is the archive of old versions, and the decision log is the history of
+  what changed and why: it is append-only, and a superseded entry is marked superseded, never deleted.
+- When a number that was reported (to Jirka or in a committed report) changes, add one line to
+  that report's `## History` section: old value, why it changed, and the command to read the old
+  version (e.g. `git show <commit>:<path>`). Also add a decision-log entry. Changes that were never
+  reported need no History line.
 
 ## Conventions
 - BIC (paper eq. 7/9): BIC = LL - (log N / 2) * params. Higher is better. Natural log.

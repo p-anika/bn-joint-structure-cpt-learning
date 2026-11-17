@@ -31,9 +31,10 @@ VARNAMES_FILE: Path = DATA_PROCESSED / "bn-data-44-varnames.txt"
 # ---- Phase 1 results ----
 PHASE1_DIR: Path = RESULTS / "phase1"
 PHASE1_GOBNILP_LOG: Path = PHASE1_DIR / "gobnilp-std-run.log"
-# Reported to Jirka on Sep 7, 2026 with the tie bug; superseded by STEP151_CPT_SUMMARY. Kept
-# unchanged as the record of what was reported; nothing regenerates it any more.
-PHASE1_CPT_SUMMARY: Path = PHASE1_DIR / "cpt-type-summary.csv"
+# The CPT-type CSV reported to Jirka on Sep 7, 2026 (old winner rule, 10/30/4). It is no
+# longer in the working tree; git keeps it at this commit, and the regression tests read it
+# with `git show <PHASE1_CPT_SUMMARY_GIT>` to check that the BIC values never change.
+PHASE1_CPT_SUMMARY_GIT: str = "9d80757:results/phase1/cpt-type-summary.csv"
 PHASE1_HC_DAG_CSV: Path = PHASE1_DIR / "bnlearn-hc-dag.csv"  # bnlearn hill-climbing structure
 
 # ---- Phase 1.5 results: results/phase1.5/<step>-<experiment>/ ----

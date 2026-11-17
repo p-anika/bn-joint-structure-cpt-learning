@@ -12,5 +12,5 @@ the one for steps 1.5.1–1.5.2 (`git log -- results/phase1.5` shows it).
 
 | File | What it is | Status |
 |---|---|---|
-| `cpt-type-summary.csv` | One row per node: `variable`, `n_parents`, `parents` (`;`-separated), `bic_std`, `bic_mlr`, `bic_olr` (−inf = OLR not fitted, node has no parents), `mlr_converged`, `olr_converged` (empty = not fitted), `winner`. Derived. | Current. **Supersedes `results/phase1/cpt-type-summary.csv`** (same BIC values to the last digit; 6 winners corrected). Checked byte for byte by `tests/test_phase1_regression.py`. |
+| `cpt-type-summary.csv` | One row per node: `variable`, `n_parents`, `parents` (`;`-separated), `bic_std`, `bic_mlr`, `bic_olr` (−inf = OLR not fitted, node has no parents), `mlr_converged`, `olr_converged` (empty = not fitted), `winner`. Derived. | Current. Same BIC values, to the last digit, as the CSV reported on Sep 7 (`git show 9d80757:results/phase1/cpt-type-summary.csv`); 6 winners differ because of the tie rule (History in `docs/reports/phase-1.md`). Checked byte for byte by `tests/test_phase1_regression.py`. |
 | `fit-log.txt` | Console output of the command: structure size, convergence counts, any non-converged fit, the split. Derived. | Current. |

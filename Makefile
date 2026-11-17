@@ -61,9 +61,8 @@ $(SCORING2A): tools/scoring2a/scoring2a.c
 	$(CXX) -O2 -o $@ $< -lm
 
 # ---------------------------------------------------------------- Phase 1
-# Stage 5 (CPT types) is no longer part of this target: its output
-# results/phase1/cpt-type-summary.csv is the record of what was reported to Jirka on Sep 7 and
-# must never be regenerated (it had the tie bug). Its corrected version is made by `make phase1.5`.
+# The CPT types on these structures are made by `make phase1.5` (results/phase1.5/), so this
+# target only makes the structures.
 phase1: $(GOB_LOG) $(HC_CSV)   ## Phase 1 structures: scores, GOBNILP, hc (~20 min from scratch)
 	@grep "objective value" $(GOB_LOG)
 

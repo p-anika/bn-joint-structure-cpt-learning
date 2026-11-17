@@ -1,11 +1,12 @@
 # Experiment log
 
-One row per run that produced a number. **Commit** is the commit whose code and data produced
-the number. A row is never edited after the number has been reported; mistakes get a new row
-or a dated note.
+One row per run that produced a number, including runs whose result turned out wrong.
+**Commit** is the commit whose code and data produced the number. Like the decision log, this
+is an append-only history: a row is never edited or deleted; if a result was wrong, a later
+row records the corrected run. Paths are the paths at the time of the run.
 
-Phase 1 runs (Aug–Sep 2026) were backfilled in step 1.5.0b, from `docs/reports/phase-1.md`
-and the git history. Paths in those rows are the paths at the time.
+Phase 1 runs (Aug–Sep 2026) were backfilled in step 1.5.0b from the Phase 1 report and the
+git history.
 
 | Date | Commit | Exact command | Inputs | Output folder | Headline result | Notes |
 |---|---|---|---|---|---|---|

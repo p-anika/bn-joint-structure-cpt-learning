@@ -3,8 +3,9 @@
 Three questions, each answered by comparing with a saved, reported file:
 
 1. Did the scores stay the same? Step 1.5.1 changed only the WINNER rule, so the three BIC
-   columns must equal those of `results/phase1/cpt-type-summary.csv` (reported to Jirka on
-   Sep 7, 2026) exactly, to the last digit.
+   columns must equal, to the last digit, those of the CPT-type CSV reported to Jirka on
+   Sep 7, 2026. That file is no longer in the working tree; it is read from git
+   (`config.PHASE1_CPT_SUMMARY_GIT`, i.e. `git show 9d80757:results/phase1/cpt-type-summary.csv`).
 2. Did exactly the expected winners change? The tie rule turns the six nodes where MLR won by
    rounding noise (~1e-13) into STD: 10/30/4 becomes 16/24/4 (STD/MLR/OLR).
 3. Does the code still produce the saved step-1.5.1 and step-1.5.2 CSVs byte for byte, and
@@ -13,6 +14,9 @@ Three questions, each answered by comparing with a saved, reported file:
 If a test fails, a code change altered a number: stop and investigate, never edit the CSVs.
 Takes about 30-40 seconds (about 175 logistic-regression fits).
 """
+
+import io
+import subprocess
 
 import pandas as pd
 import pytest
@@ -48,20 +52,34 @@ def hc_summary(data) -> pd.DataFrame:
     return fit_cpt_types(df, parents, varnames)
 
 
-def _read_exact(path) -> pd.DataFrame:
+def _read_exact(path_or_buffer) -> pd.DataFrame:
     # "round_trip" parses each number to exactly the float that was written (the default
     # parser may be off in the last bit, which would make an exact comparison fail wrongly)
-    return pd.read_csv(path, float_precision="round_trip", keep_default_na=False)
+    return pd.read_csv(path_or_buffer, float_precision="round_trip", keep_default_na=False)
 
 
-def test_scores_unchanged_from_phase1(gobnilp_summary) -> None:
-    old = _read_exact(config.PHASE1_CPT_SUMMARY)
+@pytest.fixture(scope="module")
+def reported_phase1() -> pd.DataFrame:
+    """The CPT-type CSV reported on Sep 7, read from git (`git show <commit>:<path>` prints a
+    file as it was in that commit). check=True makes the test fail loudly if git can't find it."""
+    text = subprocess.run(
+        ["git", "show", config.PHASE1_CPT_SUMMARY_GIT],
+        cwd=config.REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    return _read_exact(io.StringIO(text))
+
+
+def test_scores_unchanged_from_phase1(gobnilp_summary, reported_phase1) -> None:
+    old = reported_phase1
     new = gobnilp_summary[SCORE_COLUMNS]
     pd.testing.assert_frame_equal(new, old[SCORE_COLUMNS].astype(new.dtypes), check_exact=True)
 
 
-def test_tie_rule_changes_exactly_six_winners(gobnilp_summary) -> None:
-    old = _read_exact(config.PHASE1_CPT_SUMMARY)
+def test_tie_rule_changes_exactly_six_winners(gobnilp_summary, reported_phase1) -> None:
+    old = reported_phase1
     changed = gobnilp_summary["winner"] != old["winner"]
     assert gobnilp_summary.loc[changed, "variable"].tolist() == FLIPPED_BY_TIE_RULE
     assert (old.loc[changed, "winner"] == "MLR").all()

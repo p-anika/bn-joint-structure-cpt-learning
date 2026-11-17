@@ -157,7 +157,7 @@ def test_tie_rule_picks_std_over_rounding_noise() -> None:
 
 
 def test_tie_rule_real_phase1_case() -> None:
-    """a13 in results/phase1/cpt-type-summary.csv: MLR won the old rule by ~2e-13."""
+    """a13 on the GOBNILP structure: under the Phase 1 rule (no tolerance) MLR won by ~2e-13."""
     scores = {"STD": -1583.719733998301, "MLR": -1583.7197339983009, "OLR": -1592.7923607959506}
     assert cs.pick_winner(scores) == "STD"
 

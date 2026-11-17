@@ -10,5 +10,5 @@ research result. Command: `make test-data24`.
 | `pdagadjmat.txt`, `pdagadjmat.dot` | Its CPDAG (the equivalence class: arcs whose direction the data can't decide become undirected) | same |
 | `gobnilp-data24.log` | GOBNILP's console output: objective −3411.597651 | `make test-data24`, step 1.5.0b |
 
-In step 1.5.0b GOBNILP was re-run from its new location (`~/tools/gobnilp/`); the four
-adjmat/pdagadjmat files came out byte-identical to the committed ones.
+Re-running `make test-data24` with GOBNILP in `~/tools/gobnilp/` gives the same objective and
+byte-identical adjmat/pdagadjmat files.

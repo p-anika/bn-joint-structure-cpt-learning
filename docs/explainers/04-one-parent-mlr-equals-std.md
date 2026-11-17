@@ -35,11 +35,12 @@ parents. Then MLR is a genuinely smaller model.
 
 ## 2. Why it matters in this project
 
-- **The tie bug (fixed in step 1.5.1).** In Phase 1 the winner was simply the highest BIC. For
-  six 0-/1-parent nodes, MLR's number happened to be 1e-13 higher, so MLR "won" a tie that is
-  really no difference at all. The reported split 10 STD / 30 MLR / 4 OLR became 16 / 24 / 4
-  once scores within 1e-6 were treated as equal and ties given to the simplest type (STD, then
-  OLR, then MLR). Results: [`docs/reports/1.5.1-1.5.2.md`](../reports/1.5.1-1.5.2.md).
+- **The tie rule.** Without a tolerance, rounding noise decides between two identical models.
+  This happened in Phase 1: for six 0-/1-parent nodes MLR's number was 1e-13 higher, so MLR
+  "won", giving 10 STD / 30 MLR / 4 OLR instead of 16 / 24 / 4. The fix: scores within 1e-6 are
+  treated as equal, and ties go to the simplest type (STD, then OLR, then MLR). See the
+  [Phase 1 report](../reports/phase-1.md#what-we-tried-that-didnt-work) and
+  [`docs/reports/1.5.1-1.5.2.md`](../reports/1.5.1-1.5.2.md).
 - **Joint scoring (Phase 2).** For every candidate parent set of size 0 or 1, computing MLR is
   wasted work: its score is known to equal STD's. That is a first, trivially safe saving.
 - **The paper.** It is a small lemma worth stating: it explains why the published model has
@@ -119,8 +120,8 @@ both columns show −1142.5083085785432). Across all 0-/1-parent nodes the large
 **Answers.**
 1. 1 parent: both 6. 2 parents: STD 18, MLR 10.
 2. log(30/58) − log(114/1118) = −0.659246 + 2.283098 = 1.623853, matching the fitted value.
-3. Its BIC was larger by rounding noise (≤ 4.5e-13) and the old rule had no tolerance. Step 1.5.1
-   treats differences below 1e-6 as ties and gives ties to STD.
+3. Its BIC was larger by rounding noise (≤ 4.5e-13) and the rule then in use had no tolerance.
+   The tie rule treats differences below 1e-6 as ties and gives ties to STD.
 4. A (parent, child) combination with zero count: MLR can't reach probability 0 with finite
    coefficients, so its LL stays slightly below STD's (and the fit may not converge).
 5. With 2 parents STD has 18 parameters and MLR 10; MLR cannot represent parent interactions,

@@ -21,8 +21,8 @@
 
 ## 2. Why it matters here
 
-- One command (`make phase1`) reproduces every Phase 1 number, so anyone, including Jirka,
-  can check them.
+- Two commands (`make phase1`, then `make phase1.5`) reproduce every Phase 1 and 1.5 number, so
+  anyone, including Jirka, can check them.
 - The STD/MLR/OLR math is used again in every later phase; as a tested package, it can't
   silently drift.
 - The regression test is how step 1.5.0b proved the reorganization changed no number.
@@ -31,17 +31,17 @@
 
 ## 3. Worked example with our data
 
-- `make phase1` after step 1.5.0b: Make sees that `results/phase1/cpt-type-summary.csv` needs
-  `gobnilp-std-run.log`, which needs `bn-data-44-bic-fixed.bnsl`, which needs
-  `bn-data-44-bic.scores`, which needs `bn-data-44.dat`, which needs `data/raw/BN-data.csv`. It
-  runs those five steps in that order. Run it again and it does nothing, because every output is
-  newer than its inputs.
+- `make phase1` on a fresh checkout: Make sees that `results/phase1/gobnilp-std-run.log` needs
+  `bn-data-44-bic-fixed.bnsl`, which needs `bn-data-44-bic.scores`, which needs
+  `bn-data-44.dat` (and the scoring2a program), which needs `data/raw/BN-data.csv`. It runs
+  those steps in that order. Run it again and it does nothing, because every output is newer
+  than its inputs.
 - `BN-data.csv` has CRLF endings: the first line ends with the bytes `d14\r\n`. Its SHA-256 is
   `e8a1aeb11d0709e81cdbd8d6ed6315b8bb8d644fa4a305254aab3aa62c0891d7`. Jirka's R code
   reproduces it byte for byte only if written with `eol = "\r\n"`; written with LF, every value
   is the same but the checksum differs.
-- `tests/test_phase1_regression.py` refits all 44 nodes and compares the result with the
-  committed CSV byte for byte: 44 rows × 6 columns, every digit equal.
+- `tests/test_phase1_regression.py` refits all 44 nodes on both structures and compares the
+  results with the committed CSVs in `results/phase1.5/` byte for byte, every digit equal.
 
 ## 4. Where it appears in the code
 
@@ -62,7 +62,7 @@ Architecture: `docs/code-guide/ARCHITECTURE.md`.
 
 ## 6. Check your understanding
 
-1. You edit `src/bnjoint/cpt_scores.py`. Which Phase 1 stages does `make phase1` re-run?
+1. You edit `src/bnjoint/cpt_scores.py`. What do `make phase1` and `make phase1.5` re-run?
 2. Why is `data/raw/** -text` in `.gitattributes`?
 3. A colleague's copy of `BN-data.csv` has a different SHA-256 from ours. Does that mean the
    data values differ?
@@ -72,13 +72,15 @@ Architecture: `docs/code-guide/ARCHITECTURE.md`.
 ---
 
 **Answers.**
-1. Only stage 5 (CPT types): `cpt-type-summary.csv` lists `cpt_scores.py` as a prerequisite;
-   scoring, GOBNILP and hc don't depend on it.
+1. `make phase1` re-runs nothing: scoring, GOBNILP and hc don't depend on `cpt_scores.py`.
+   `make phase1.5` re-runs both CPT-type fits (and the Table 2 comparison), because their CSVs
+   list `cpt_scores.py` as a prerequisite.
 2. So git never converts the CRLF line endings of Jirka's originals; converting them would
    change the bytes and the checksums.
 3. Not necessarily: it might only differ in line endings or quoting. Compare values with pandas
    (or R) to find out; either way, investigate before using it.
 4. All the logic lives in `src/bnjoint/`; the script only reads arguments, calls the package and
    prints a summary.
-5. A reported number has changed. Stop, find out why, and only change the CSV with a decision
-   log entry and a dated correction note.
+5. A reported number has changed. Stop and find out why. If the change is right, write the new
+   result to a new results folder, add a decision log entry and a History line in the report
+   that reported the number; never edit the old CSV.
