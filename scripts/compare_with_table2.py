@@ -1,12 +1,12 @@
 """Step 1.5.2: compare our CPT types on the hill-climbing structure with the paper's Table 2.
 
-Inputs:  our per-node result (default results/phase1.5/1.5.2-hc-vs-table2/cpt-type-summary-hc.csv,
+Inputs:  our per-node result (default results/phase-1.5/1.5.2-hc-vs-table2/cpt-type-summary-hc.csv,
          made by `python scripts/fit_cpt_types.py --structure hc`) and the reference table
          data/reference/kybernetika-table2.csv (Vomlel, Kybernetika 62(3) 2026, Table 2, p. 411).
 Output:  a CSV with one row per node: variable, parents_ours, parents_ref, same_parents,
          type_ours, type_ref, same_type (default .../table2-comparison.csv); the console
          shows both splits and lists every node that differs.
-Run:     python scripts/compare_with_table2.py      (normally via `make phase1.5`)
+Run:     python scripts/compare_with_table2.py      (normally via `make phase-1.5`)
 
 Logic lives in `bnjoint.structures.compare_with_reference`.
 """

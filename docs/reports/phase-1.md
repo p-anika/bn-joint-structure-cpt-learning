@@ -1,8 +1,15 @@
 # Phase 1 report: the two-stage baseline
 
+**Summary for Jirka.** We reran your two-stage method on the Kybernetika data, but learned the
+structure by exact search (scoring2a + GOBNILP) instead of hill-climbing: the proven BIC-optimal
+structure with standard tables has 69 arcs and BIC −64837.74, against 66 arcs for bnlearn's hc.
+On that exact structure the CPT types come out 16 standard / 24 MLR / 4 OLR (the 10/30/4 we
+reported in September was a tie-breaking bug), and the difference from your 19/22/3 is entirely
+due to the different structure.
+
 Phase 1 ran Aug–Sep 2026 and was reported to Jirka on Sep 7, 2026. Status: **complete**.
 Decisions behind it: `docs/decision-log.md` entries 2–10 and 19–20. Runs:
-`docs/experiment-log.md`. How to run it: [`docs/code-guide/phase1-pipeline.md`](../code-guide/phase1-pipeline.md).
+`docs/experiment-log.md`. How to run it: [`docs/code-guide/phase-1-pipeline.md`](../code-guide/phase-1-pipeline.md).
 
 ## Goal
 
@@ -15,7 +22,7 @@ data, with one change: learn the structure by **exact** search instead of hill-c
 
 BIC = log-likelihood − (log N / 2) × (number of free parameters), natural log, higher is
 better (paper eq. 7/9). This is the opposite sign of the textbook "−2·LL + k·log N"; both give
-the same ranking. The three CPT types: [explainer 03](../explainers/03-cpt-types.md).
+the same ranking. The three CPT types: [explainer](../explainers/cpt-types.md).
 
 ## Method
 
@@ -39,7 +46,7 @@ the same ranking. The three CPT types: [explainer 03](../explainers/03-cpt-types
 
 ### Exact structure (GOBNILP)
 
-File: `results/phase1/gobnilp-std-run.log` (DAG and CPDAG: `results/phase1/adjmat.*`,
+File: `results/phase-1/gobnilp-std-run.log` (DAG and CPDAG: `results/phase-1/adjmat.*`,
 `pdagadjmat.*`).
 
 - **Optimal solution, gap 0.00 %:** this is the proven BIC-best structure for STD tables, not
@@ -48,12 +55,12 @@ File: `results/phase1/gobnilp-std-run.log` (DAG and CPDAG: `results/phase1/adjma
 - **69 arcs**, at most 2 parents per node (26 nodes with 2 parents, 17 with 1). Exactly one
   node has no parents: **d11**.
 - Deterministic: scoring2a and GOBNILP need no seed. A rebuild from the raw data reproduces
-  every file byte for byte ([1.5.0b](1.5.0b.md#results), [1.5.1–1.5.2](1.5.1-1.5.2.md#phase-1-rebuild)).
+  every file byte for byte ([phase-1.5.md §1.5.0](phase-1.5.md#rebuild-from-the-raw-data)).
 
 ### CPT types on the exact structure
 
-File: `results/phase1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv` (made in step 1.5.1 with the
-tie rule; [report](1.5.1-1.5.2.md#151-gobnilp-structure)).
+File: `results/phase-1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv` (made in step 1.5.1 with the
+tie rule; [report](phase-1.5.md#151-gobnilp-structure)).
 
 | | STD | MLR | OLR |
 |---|---|---|---|
@@ -65,15 +72,15 @@ tie rule; [report](1.5.1-1.5.2.md#151-gobnilp-structure)).
 - Every 2-parent node chooses MLR (24) or OLR (2: a20, d8), never STD, as in the paper. This is a
   property of the data, not a rule. STD always fits at least as well, but with 2 parents it pays
   for 18 parameters against MLR's 10. It wins only if the parents interact strongly, and here
-  they don't ([explainer 03](../explainers/03-cpt-types.md#5-common-confusions)).
+  they don't ([explainer](../explainers/cpt-types.md#5-common-confusions)).
 - With 0 or 1 parents, STD and MLR are the same model and their BICs differ only by rounding
   (≤ 4.5e-13). That is why the tie rule is needed
-  ([explainer 04](../explainers/04-one-parent-mlr-equals-std.md)).
+  ([explainer](../explainers/one-parent-mlr-equals-std.md); [lemma](../theory/one-parent-mlr-equals-std.md)).
 - The two-stage total, the sum of the best BIC per node, is −64249.31.
 
 ### Hill-climbing structure (bnlearn)
 
-File: `results/phase1/bnlearn-hc-dag.csv` (adjacency matrix, row = parent, column = child).
+File: `results/phase-1/bnlearn-hc-dag.csv` (adjacency matrix, row = parent, column = child).
 
 - 44 nodes, **66 directed arcs**, 0 undirected, average branching factor 1.50 (at most 2
   parents: 23 nodes with 2, 20 with 1). Exactly one node has no parents: **a3**.
@@ -86,7 +93,7 @@ File: `results/phase1/bnlearn-hc-dag.csv` (adjacency matrix, row = parent, colum
   local optimum; GOBNILP's result is proven optimal. The CPDAG comparison of the two is step 1.5.3.
 - Its parent sets are **exactly those of the paper's Table 2**, and our CPT-type fitting on it
   gives the paper's types on all 44 nodes, 19/22/3 (step 1.5.2,
-  [report](1.5.1-1.5.2.md#152-hc-structure-vs-table-2)). So the split difference in the table
+  [report](phase-1.5.md#152-hc-structure-vs-table-2)). So the split difference in the table
   above comes entirely from the different structure.
 
 bnlearn's console output:
@@ -170,4 +177,4 @@ bnlearn's console output:
 
 None specific to Phase 1. The open questions that affect it, how OLR codes its parents (for
 Jirka) and the absolute 1e-6 tie tolerance (to watch in Phase 2), are listed once, in
-[the 1.5.1–1.5.2 report](1.5.1-1.5.2.md#open-questions).
+[the Phase 1.5 report](phase-1.5.md#open-questions).

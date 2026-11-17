@@ -1,10 +1,12 @@
-# 03 — The three CPT types: STD, MLR, OLR
+# The three CPT types: STD, MLR, OLR
 
-Prerequisites: what a Bayesian network is (explainer 01, planned) and what BIC is (explainer
-02, planned). Short versions: in a Bayesian network every variable (node) has a set of
+Prerequisites: what a [Bayesian network](../glossary.md#bayesian-network) is and what
+[BIC](../glossary.md#bic) is (explainers planned). Short versions: in a Bayesian network every variable (node) has a set of
 *parents*, and the network stores, for each node, the probabilities of its states given every
 combination of its parents' states. BIC = log-likelihood − (log N / 2) × (number of free
 parameters); higher is better.
+
+Terms used here (one-line definitions in the glossary): [CPT](../glossary.md#cpt), [STD](../glossary.md#std), [MLR](../glossary.md#mlr), [OLR](../glossary.md#olr), [parent configuration](../glossary.md#parent-configuration), [dummy coding](../glossary.md#dummy-coding), [reference state](../glossary.md#reference-state), [cut-point](../glossary.md#cut-point), [free parameter](../glossary.md#free-parameter), [log-likelihood](../glossary.md#log-likelihood), [two-stage learning](../glossary.md#two-stage-learning), [joint learning](../glossary.md#joint-learning).
 
 ## 1. Plain-words definition
 
@@ -46,7 +48,7 @@ are chosen together. Every number in Phases 1–4 comes from these three formula
 ## 3. Worked example from our data
 
 Node **a1** with parents **a19, a27** (GOBNILP structure; numbers from
-`results/phase1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv`). N = 1661, so one parameter costs
+`results/phase-1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv`). N = 1661, so one parameter costs
 log(1661)/2 = 3.7076.
 
 | Type | Log-likelihood | Parameters | Penalty | BIC |
@@ -59,7 +61,7 @@ STD fits best (highest log-likelihood, as it always must), but MLR loses only 3.
 saving 8 parameters (29.66 in penalty). OLR saves even more parameters but loses too much fit.
 
 A 1-parent example where the simplest type wins: **d7 | a27**. STD and MLR both have BIC
-−1473.79 (they are the same model, explainer 04); OLR, with 3 instead of 6 parameters, has
+−1473.79 (they are the same model; see the [one-parent explainer](one-parent-mlr-equals-std.md)); OLR, with 3 instead of 6 parameters, has
 −1471.64 and wins. Looking at the counts, d7 moves *up* the scale as a27 increases (P(d7 = +1)
 is 66/711 = 9 % when a27 = −1 and 180/638 = 28 % when a27 = +1), which is exactly the kind of
 ordered effect OLR describes with one slope.
@@ -70,7 +72,7 @@ ordered effect OLR describes with one slope.
   [`src/bnjoint/cpt_scores.py`](../../src/bnjoint/cpt_scores.py).
 - Fitting: `loglik_std` (counts, closed form), `fit_mlr` (statsmodels `MNLogit`), `fit_olr`
   (statsmodels `OrderedModel`, BFGS); dummy coding in `mlr_design`.
-- Choosing: `pick_winner` (tie rule, explainer 04 explains why it is needed).
+- Choosing: `pick_winner` (tie rule, the [one-parent explainer](one-parent-mlr-equals-std.md) explains why it is needed).
 - Walkthrough: [`docs/code-guide/cpt-scoring.md`](../code-guide/cpt-scoring.md).
 - Coding choices (reference state, OLR with raw parent values, no OLR without parents):
   decision log entries 7–9.
@@ -78,7 +80,7 @@ ordered effect OLR describes with one slope.
 ## 5. Common confusions
 
 - **"MLR is logistic regression, so it's an approximation."** For 0 or 1 parents it is not: it
-  is exactly the STD model written differently (explainer 04). It only becomes restrictive at
+  is exactly the STD model written differently (explainer [one-parent MLR = STD](one-parent-mlr-equals-std.md)). It only becomes restrictive at
   2+ parents.
 - **"OLR treats the *parents* as ordered too."** In our coding, yes: parents enter as the numbers
   −1, 0, +1 with one slope, so "0 is halfway between −1 and +1" is assumed. The paper's

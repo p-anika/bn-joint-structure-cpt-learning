@@ -1,13 +1,13 @@
-# Makefile: one command per pipeline stage. Run from the repo root, e.g. `make phase1`.
+# Makefile: one command per pipeline stage. Run from the repo root, e.g. `make phase-1`.
 #
 # How make works (short version): each rule says "to build TARGET, first make sure the
 # PREREQUISITES exist, then run these commands". make only re-runs a rule when a prerequisite
-# is newer than the target, so a second `make phase1` does nothing unless something changed.
-# `make -B phase1` forces everything to be rebuilt. Walkthrough: docs/code-guide/ARCHITECTURE.md.
+# is newer than the target, so a second `make phase-1` does nothing unless something changed.
+# `make -B phase-1` forces everything to be rebuilt. Walkthrough: docs/code-guide/ARCHITECTURE.md.
 #
 # Output folders can be redirected, which is how the reorganization was checked without
 # overwriting the reported files:
-#   make phase1 PROCESSED=/tmp/check/processed OUT=/tmp/check/phase1
+#   make phase-1 PROCESSED=/tmp/check/processed OUT=/tmp/check/phase-1
 
 SHELL := /bin/bash
 .SHELLFLAGS := -o pipefail -c   # a pipeline (cmd | tee log) fails if cmd fails, not only tee
@@ -21,10 +21,10 @@ CXX       ?= g++
 
 # derived data files / Phase 1 results / GOBNILP smoke-test results
 PROCESSED ?= data/processed
-OUT       ?= results/phase1
+OUT       ?= results/phase-1
 OUT24     ?= results/test-data24
-# Phase 1.5 results, one folder per experiment (results/phase1.5/README.md)
-OUT15     ?= results/phase1.5
+# Phase 1.5 results, one folder per experiment (results/phase-1.5/README.md)
+OUT15     ?= results/phase-1.5
 
 # scoring2a settings (decision log entry 5): alpha = 1 (true BIC), palim = 9, prune, score bic
 ALPHA := 1
@@ -49,7 +49,7 @@ CPT152    := $(OUT15)/1.5.2-hc-vs-table2/cpt-type-summary-hc.csv
 CMP152    := $(OUT15)/1.5.2-hc-vs-table2/table2-comparison.csv
 TABLE2    := data/reference/kybernetika-table2.csv
 
-.PHONY: help phase1 phase1.5 test-data24 provenance scoring2a test lint format inventory
+.PHONY: help phase-1 phase-1.5 test-data24 provenance scoring2a test lint format inventory
 
 help:   ## list the targets
 	@grep -E '^[a-z0-9.-]+:.*##' $(MAKEFILE_LIST) | sed -E 's/:.*## /\t/'
@@ -61,9 +61,9 @@ $(SCORING2A): tools/scoring2a/scoring2a.c
 	$(CXX) -O2 -o $@ $< -lm
 
 # ---------------------------------------------------------------- Phase 1
-# The CPT types on these structures are made by `make phase1.5` (results/phase1.5/), so this
+# The CPT types on these structures are made by `make phase-1.5` (results/phase-1.5/), so this
 # target only makes the structures.
-phase1: $(GOB_LOG) $(HC_CSV)   ## Phase 1 structures: scores, GOBNILP, hc (~20 min from scratch)
+phase-1: $(GOB_LOG) $(HC_CSV)   ## Phase 1 structures: scores, GOBNILP, hc (~20 min from scratch)
 	@grep "objective value" $(GOB_LOG)
 
 # 1. BN-data.csv -> scoring2a's .dat format + names file (one rule makes both files)
@@ -91,10 +91,10 @@ $(HC_CSV): $(RAW)/BN-data.csv R/bnlearn_hc.R
 	Rscript R/bnlearn_hc.R $(RAW)/BN-data.csv $@
 
 # ---------------------------------------------------------------- Phase 1.5
-phase1.5: $(CPT151) $(CMP152)   ## CPT types with the tie rule: GOBNILP (1.5.1) and hc vs Table 2 (1.5.2)
+phase-1.5: $(CPT151) $(CMP152)   ## CPT types with the tie rule: GOBNILP (1.5.1) and hc vs Table 2 (1.5.2)
 
 # The Phase 1 structures (GOBNILP log, hc adjacency CSV) are READ but deliberately NOT listed as
-# prerequisites: listing them would let make rebuild them (and so rewrite results/phase1/, the
+# prerequisites: listing them would let make rebuild them (and so rewrite results/phase-1/, the
 # record of what was reported to Jirka) whenever a file further up the chain looks newer.
 #
 # 1.5.1: CPT types on the GOBNILP structure. tee keeps the console output (split and

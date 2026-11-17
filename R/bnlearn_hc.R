@@ -4,7 +4,7 @@
 #
 # Input:  data/raw/BN-data.csv (values -1/0/1; each column is treated as a 3-level factor)
 # Output: an adjacency matrix CSV: row = parent, column = child, 1 = arc
-#         (default results/phase1/bnlearn-hc-dag.csv); the model is also printed.
+#         (default results/phase-1/bnlearn-hc-dag.csv); the model is also printed.
 # Run:    Rscript R/bnlearn_hc.R                         (defaults)
 #         Rscript R/bnlearn_hc.R <data.csv> <out.csv>
 #
@@ -14,7 +14,7 @@ library(bnlearn)
 
 args <- commandArgs(trailingOnly = TRUE)       # arguments after the script name
 data_csv <- if (length(args) >= 1) args[1] else "data/raw/BN-data.csv"
-out_csv  <- if (length(args) >= 2) args[2] else "results/phase1/bnlearn-hc-dag.csv"
+out_csv  <- if (length(args) >= 2) args[2] else "results/phase-1/bnlearn-hc-dag.csv"
 
 set.seed(1)
 d <- read.csv(data_csv)

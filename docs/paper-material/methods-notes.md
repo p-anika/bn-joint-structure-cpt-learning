@@ -40,9 +40,9 @@ parent. MLR and OLR were fitted with the Python package statsmodels (`MNLogit`; 
 with BFGS). The type with the highest BIC was selected per node. Scores
 within 10⁻⁶ of the best were treated as tied, and ties were resolved in favour of the simpler
 type in the order STD, OLR, MLR. This matters for nodes with at most one parent, where STD and
-MLR are the same model and their computed BICs differ only by floating-point error (at most
-6.8 × 10⁻¹³ here). For every MLR and OLR fit we recorded the optimizer's convergence flag; all
-fits converged.
+MLR are the same model ([lemma](../theory/one-parent-mlr-equals-std.md)) and their computed
+BICs differ only by floating-point error. For every MLR and OLR fit we recorded the optimizer's
+convergence flag (results: [phase-1.5.md](../reports/phase-1.5.md#151-gobnilp-structure)).
 
 ## Hill-climbing comparison [Phase 1]
 
@@ -52,7 +52,7 @@ which is how the structure in [vomlel2026](../references.md#vomlel2026) was obta
 
 ## Reproducibility [1.5.0b]
 
-All stages are driven by a Makefile (`make phase1`); the scoring and structure-learning
+All stages are driven by a Makefile (`make phase-1`); the scoring and structure-learning
 programs are deterministic for a given input. Source code, settings files and checksums of the
 original data are kept in the project repository.
 

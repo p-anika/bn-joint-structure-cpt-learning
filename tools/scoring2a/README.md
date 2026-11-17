@@ -13,5 +13,5 @@ a `.scores` file for GOBNILP. What the code does: [`docs/code-guide/scoring2a.md
 Check with `sha256sum tools/scoring2a/*`. Compiling prints `-Wunused-result` warnings
 about `fscanf`; they are harmless and the code is deliberately left unchanged.
 
-Run (what `make phase1` does): `tools/scoring2a/scoring2a <file>.dat 1 9 prune 0 bic > <file>.scores`.
+Run (what `make phase-1` does): `tools/scoring2a/scoring2a <file>.dat 1 9 prune 0 bic > <file>.scores`.
 The meaning of each argument is in `docs/setup.md` §6.

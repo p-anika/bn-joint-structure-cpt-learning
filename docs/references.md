@@ -19,6 +19,7 @@ Jiří Vomlel. Enhancing Bayesian networks through logistic regression: a case s
 society divisions. *Kybernetika* 62(3), 2026, pp. 400–426. DOI
 [10.14736/kyb-2026-3-0400](https://doi.org/10.14736/kyb-2026-3-0400).
 
+- **Reading note:** [reading-notes/vomlel2026.md](reading-notes/vomlel2026.md).
 - **Use here:** the baseline we reproduce and extend. It defines the STD/MLR/OLR CPT types and
   their BIC (the equations cited in `src/bnjoint/cpt_scores.py`), uses the data set in
   `data/raw/BN-data.csv`, and its Table 2 is `data/reference/kybernetika-table2.csv`.
@@ -31,6 +32,7 @@ Jiří Vomlel, Václav Kratochvíl, František Kratochvíl. Structural learning 
 Bayesian networks. *International Journal of Approximate Reasoning* 161, 2023, article 108990.
 DOI [10.1016/j.ijar.2023.108990](https://doi.org/10.1016/j.ijar.2023.108990).
 
+- **Reading note:** [reading-notes/vomlel2023.md](reading-notes/vomlel2023.md).
 - **Use here:** the template for joint learning: its Algorithm 2 scores each parent set with the
   better of two CPT types and passes the list to GOBNILP. Its Section 5 documents the failed
   pruning attempts that make our pruning problem open; Jirka also pointed us to its Lemma 3.
@@ -44,6 +46,7 @@ for learning Bayesian networks using BIC. *Artificial Intelligence* 260, 2018, p
 DOI [10.1016/j.artint.2018.04.002](https://doi.org/10.1016/j.artint.2018.04.002).
 Preprint: [arXiv:1707.06194](https://arxiv.org/abs/1707.06194).
 
+- **Reading note:** [reading-notes/decampos2018.md](reading-notes/decampos2018.md).
 - **Use here:** the BIC pruning rules for STD parent sets that our project must extend to
   MLR/OLR. What `scoring2a.c` implements from it is in
   [`code-guide/scoring2a.md`](code-guide/scoring2a.md).
@@ -58,13 +61,14 @@ Preprint: [arXiv:1707.06194](https://arxiv.org/abs/1707.06194).
 Cassio P. de Campos, Qiang Ji. Efficient structure learning of Bayesian networks using
 constraints. *Journal of Machine Learning Research* 12, 2011, pp. 663–689.
 
+- **Reading note:** [reading-notes/decampos2011.md](reading-notes/decampos2011.md).
 - **Use here:** the classic BIC pruning bound (its Theorem 4), which is the rule `scoring2a.c`
   actually implements ([`code-guide/scoring2a.md`](code-guide/scoring2a.md)).
 - **Verified from:** the JMLR PDF in `papers/` (2026-11-16; first page: "Journal of Machine
   Learning Research 12 (2011) 663-689", title, authors Cassio P. de Campos and Qiang Ji). The
   details also match reference [7] of [decampos2018](#decampos2018) (checked by Anika). No DOI is
-  printed on the paper, so none is given. That the bound is its *Theorem 4* comes from
-  [decampos2018](#decampos2018); the theorem itself has not yet been read in the 2011 PDF.
+  printed on the paper, so none is given. Theorem 4 (p. 672) was read in
+  the 2011 PDF itself (2026-11-16); it is the BIC/AIC bound.
 
 ### cussens2011
 
@@ -101,7 +105,7 @@ programming (C implementation, uses SCIP).
 <https://bitbucket.org/jamescussens/gobnilp>. We use git commit `5441edf`; versions and build
 details are in [`setup.md`](setup.md).
 
-- **Use here:** finds the BIC-optimal network from the local scores (`make phase1`).
+- **Use here:** finds the BIC-optimal network from the local scores (`make phase-1`).
 - **Verified from:** the GOBNILP `README.md` ("GOBNILP was written by James Cussens and Mark
   Bartlett"). Jirka's own runs used GOBNILP 1.6.3, which [vomlel2023](#vomlel2023) cites as
   "J. Cussens, M. Bartlett, GOBNILP, Version 1.6.3, https://www.cs.york.ac.uk/aig/sw/gobnilp/,

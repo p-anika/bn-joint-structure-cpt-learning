@@ -64,7 +64,7 @@ Phase 5 is a detour, taken only if the Phase 3 rules cannot reach a useful palim
   - Move the 23-variable test outputs to `results/test-data24/`.
   - Add `requirements.txt`, a `Makefile` and `.gitattributes`.
 - [ ] Create the logs (`decision-log.md`, `experiment-log.md`, `paper-claims.md`) and the folders `paper-material/`, `code-guide/`, `explainers/` and `reports/`. Backfill the logs with Phase 1 decisions, such as alpha=1, palim=9, and parsing the GOBNILP log instead of `bi.mat`.
-- [ ] Re-run Phase 1 after the move with `make phase1`. It must reproduce BIC −64,837.74 and the same CPT CSV before you merge.
+- [ ] Re-run Phase 1 after the move with `make phase-1`. It must reproduce BIC −64,837.74 and the same CPT CSV before you merge.
 
 **Step 1.5.1: fix the tie-breaking bug (Python).**
 
@@ -471,29 +471,7 @@ Background to fill gaps whenever you need it: Koller and Friedman, Probabilistic
 
 Every decision, run and result should be findable in the repo. If it is not written down, it cannot go in the paper. Set this up in Step 1.5.0.
 
-```
-bn-joint-structure-cpt-learning/
-  README.md  CLAUDE.md  pyproject.toml  requirements*.txt  Makefile  .gitignore  .gitattributes
-  data/raw/              Jirka's original files, exactly as received (read-only, sha256 in README)
-  data/reference/        published reference data, e.g. Kybernetika Table 2 (read-only)
-  data/processed/        files derived by scripts (.dat, .scores, .bnsl), regenerable
-  src/bnjoint/           Python package: io, cpt_scores, structures, gobnilp_io, ...
-  scripts/               thin command-line entry points, one job each
-  R/                     R scripts
-  tools/                 scoring2a.c + build notes, gobnilp.set
-  tests/                 pytest tests mirroring src/bnjoint
-  results/<phase>/<experiment>/  outputs + README saying which command and commit made them
-  docs/
-    research-plan.md     this plan, exported as Markdown (master copy is the Claude doc)
-    setup.md             how to build everything; software versions (the only place for them)
-    decision-log.md  experiment-log.md  paper-claims.md
-    paper-material/      methods-notes.md (paper-style Methods paragraphs; results stay in reports)
-    code-guide/          ARCHITECTURE.md + one guide per pipeline stage
-    explainers/          beginner concept guides + README index
-    reports/             one report per prompt or phase: THE place results are written up
-    theory/  reading-notes/
-    tasks/               scratch plans for approval only; git-ignored, deleted after merge
-```
+The current repo layout, file-naming rules and documentation rules live in **`CLAUDE.md`** in the repo. That file is the single source of truth: this plan does not repeat them, so the two can't disagree. The table below describes what each log is for.
 
 The four logs, and what one entry looks like:
 

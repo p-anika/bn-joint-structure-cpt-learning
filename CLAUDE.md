@@ -30,7 +30,7 @@ checkpoints below.
    For every other step, write NO task file. Just do the work; the report records what was done.
 2. **Do the work.** Tests first for any scoring, fitting, structure, or pruning code.
 3. **Automatic checks instead of manual ones.** Run the full test suite, the expected-value
-   checks stated in the prompt or plan, and `make phase1` (expect -64837.74) whenever pipeline
+   checks stated in the prompt or plan, and `make phase-1` (expect -64837.74) whenever pipeline
    code changed. If ANY result differs from what is expected, or something surprising happens,
    STOP and report before fixing or continuing. Never "fix" a surprising number without asking.
 4. **Documentation before the checkpoint.** Complete the whole documentation checklist below
@@ -45,7 +45,8 @@ checkpoints below.
 6. **After approval**: commit and update `main` (git rules below).
 
 ## Git rules (keep GitHub clean)
-- Work on a LOCAL branch `step-<id>` so an unapproved step can be thrown away. Never push branches.
+- Work on a LOCAL branch `step-<id>` (or `docs-<topic>` for documentation-only work) so an
+  unapproved step can be thrown away. Never push branches.
 - After approval: `git merge --squash` into `main`, ONE commit per step with message
   `Step <id>: <what was done>`, push `main`, delete the local branch.
 - GitHub should show only `main`, with one clear commit per step.
@@ -54,36 +55,65 @@ checkpoints below.
 Documentation is a deliverable, not an extra. Principle: each fact lives in ONE place and
 everything else links to it. Never copy the same numbers or explanations into several files;
 duplicated docs drift apart and become wrong. Update existing docs rather than adding new ones.
+Each document type has one job; the table "Which document does what" in `docs/README.md` is the
+reference (explainer = concept for learning, code guide = how and why the code works, docstring
+= exact details, report = results, decision/experiment logs = history, paper-material = text
+for the paper, theory = statements and proofs, reading notes = what each paper says, glossary =
+one-line definitions).
+
+**Where numbers live.** Result numbers appear ONLY in: reports; the experiment log; tests
+(fixtures); `docs/paper-material/paper-claims.md` (inside each claim, with its link); explainers'
+worked examples; and as the expected output printed next to a check command (README,
+`setup.md`, code guides, this file). Everywhere else, link to the report instead of repeating
+the number. The decision log is history and keeps the numbers of its time.
+
+**Volume rule.** Skip the explainer, methods-notes and paper-claims updates when a step adds no
+new concept or claim. The other items below apply to every prompt.
 - [ ] **Docstrings and comments** in every file touched: module docstring (purpose, inputs,
       outputs, how to run, the math with paper equation numbers when known for sure);
       a docstring on every function (arguments, return value, an example); comments on any
       line a beginner would not understand. The detailed "how" lives here, next to the code.
-- [ ] **Code guide**: one per pipeline stage (e.g. `docs/code-guide/phase1-pipeline.md`,
+- [ ] **Code guide**: one per pipeline stage (e.g. `docs/code-guide/phase-1-pipeline.md`,
       `docs/code-guide/cpt-scoring.md`), plus `docs/code-guide/ARCHITECTURE.md` (a map of how all
       modules and scripts connect). Each guide covers: what the stage does, how data flows through
       it, a beginner-level walkthrough of the key functions, WHY it is designed this way and what
       alternatives were rejected, how to run it, and how to change common things safely. Link
       to docstrings instead of repeating them. Update the guide whenever the code changes.
-- [ ] **Explainer** `docs/explainers/NN-<topic>.md` for every new concept, method, or tool:
-      (1) plain-words definition, (2) why it matters in this project, (3) a tiny worked example
-      with real numbers from our data, (4) where it appears in the code, (5) common confusions,
-      (6) 3–5 "check your understanding" questions with answers at the bottom.
-      Update existing explainers instead of duplicating. Keep `docs/explainers/README.md` as an
-      ordered index (reading order for a beginner).
-- [ ] **Report**: one per prompt (or per phase), `docs/reports/<id>.md` (1–2 pages): goal, what
-      was done, results with exact numbers and the file each comes from, figures/tables,
-      what we tried that didn't work (and why), surprises, open questions for Anika or Jirka. This is THE place results are written up.
+- [ ] **Explainer** `docs/explainers/<topic>.md` (no number in the file name) for every new
+      concept, method, or tool: (1) plain-words definition, (2) why it matters in this project,
+      (3) a tiny worked example with real numbers from our data, (4) where it appears in the
+      code, (5) common confusions, (6) 3–5 "check your understanding" questions with answers at
+      the bottom. Start with a line linking the terms it uses to `docs/glossary.md`. Update
+      existing explainers instead of duplicating. The reading order lives ONLY in
+      `docs/explainers/README.md`. Formal statements and proofs go to `docs/theory/`; the
+      explainer links there.
+- [ ] **Glossary** `docs/glossary.md`: add a one-line definition for every new term, linking to
+      where it is explained.
+- [ ] **Report**: ONE per phase, `docs/reports/phase-<n>.md` (e.g. `phase-1.5.md`), with a section
+      per step (`## <step id>: <title>`: goal, what was done, results with exact numbers and the
+      file each comes from, figures/tables). It starts with a 3-sentence summary for Jirka (what
+      was done, the main result, what it means) and has the sections `## What we tried that
+      didn't work`, `## Surprises`, `## History`, `## Open questions`. This is THE place results
+      are written up. Housekeeping (moves, tools, documentation changes) goes to
+      `docs/reports/infrastructure.md` and the decision log, not to a phase report.
 - [ ] **Experiment log** `docs/experiment-log.md`, one row per run that produced a number:
       date | commit hash | exact command | inputs | output folder | headline result | notes.
-- [ ] **Decision log** `docs/decision-log.md`, one entry per choice: date | decision | why |
-      alternatives considered | decided by (Anika / Jirka / proposed by Claude, approved by Anika).
-- [ ] **Paper material**:
-      - `docs/paper-claims.md`: claim | link to the report section with the evidence | status
-        (draft / checked by Anika / agreed with Jirka). Points to reports; does not copy them.
+- [ ] **Decision log** `docs/decision-log.md`, in two parts: "Method" (data, scoring, fitting,
+      structure, Jirka's confirmations) and "Repository and process" (files, tools, tests, git,
+      documentation). Each entry is a `### <number>. <short title>` heading followed by labelled
+      lines: Date, (Status, if superseded), Decision, Why, Alternatives considered, Decided by
+      (Anika / Jirka / proposed by Claude, approved by Anika). Numbers are never reused; new
+      entries take the next number and go at the end of their part.
+- [ ] **Reading notes** `docs/reading-notes/<reference-key>.md` (named by the key in
+      `docs/references.md`) for each paper the project builds on: one page with the problem, the
+      key result in plain words, and exactly what our project reuses or extends.
+- [ ] **Paper material** (`docs/paper-material/`):
+      - `paper-claims.md`: claim (the sentence for the paper, with its numbers) | link to the
+        report section with the evidence | status (draft / checked by Anika / agreed with Jirka).
       - `docs/paper-material/methods-notes.md`: append paper-style paragraphs describing exactly
         what was done (data, parameters, software and versions, procedure) so a Methods section
         can be assembled later. Results are NOT repeated here; they live in the reports.
-      - Figures: save as PNG and PDF in `results/<experiment>/figures/`, made by a script so they
+      - Figures: save as PNG and PDF in `results/phase-<n>/<experiment>/figures/`, made by a script so they
         can be regenerated; reference them in the report.
 - [ ] **README updates**: the root `README.md` (how to run each phase) and the README of any
       folder whose contents changed.
@@ -99,10 +129,18 @@ scripts/             thin command-line entry points that call src/bnjoint; one j
 R/                   R scripts (bnlearn, CPDAGs, inference)
 tools/scoring2a/     de Campos's scoring2a.c + build notes; tools/gobnilp/gobnilp.set
 tests/               pytest tests mirroring src/bnjoint
-results/<experiment>/  outputs; one folder per experiment, never overwritten silently
-docs/                research-plan, setup, logs, code-guide/, explainers/, reports/,
-                     theory/, reading-notes/, paper-material/   (tasks/ = git-ignored scratch)
+results/phase-<n>/<experiment>/  outputs; one folder per experiment (e.g. results/phase-1.5/1.5.1-gobnilp-tie-fix/)
+docs/                README.md (doc jobs), research-plan.md, setup.md, glossary.md,
+                     decision-log.md, experiment-log.md, references.md + references.bib,
+                     code-guide/, explainers/<topic>.md, reports/phase-<n>.md + infrastructure.md,
+                     theory/, reading-notes/<reference-key>.md,
+                     paper-material/ (paper-claims.md, methods-notes.md)   (tasks/ = git-ignored scratch)
+papers/              local PDF copies of papers. Git-ignored, local only: NEVER commit (public
+                     repo, copyrighted). Cite via docs/references.md.
 ```
+Naming: phases are written `phase-1`, `phase-1.5` everywhere (results folders, reports, code
+guides, Make targets `make phase-1`, `make phase-1.5`). Explainers and reading notes have no
+numbers in their file names. Python module and test names use underscores (no hyphens allowed).
 Rules:
 - Reusable logic lives in `src/bnjoint/`, never copy-pasted between scripts. One copy of the
   math: STD/MLR/OLR scoring lives in `src/bnjoint/cpt_scores.py`.
@@ -111,13 +149,14 @@ Rules:
 - Small, single-purpose functions with clear names, type hints, and docstrings.
 - Python formatted with `ruff format` and checked with `ruff check`; R kept tidy and commented.
 - Pin dependencies in `requirements.txt`; record R package versions in `docs/setup.md`.
-- `Makefile` targets for each pipeline stage (e.g. `make phase1`, `make test`) so any result can
+- `Makefile` targets for each pipeline stage (e.g. `make phase-1`, `make test`) so any result can
   be reproduced with one command.
 - Every result folder contains a `README.md` saying which command and commit produced it.
 - External builds (SCIP, GOBNILP source) live OUTSIDE the repo (e.g. `~/tools/`); document how
   to build them in `docs/setup.md`.
 - When reorganizing, re-run the affected pipeline and confirm the numbers are unchanged
-  (e.g. Phase 1 GOBNILP objective -64837.74 and `cpt-type-summary.csv`) before merging.
+  (e.g. Phase 1 GOBNILP objective -64837.74 and the regression tests in `tests/test_regression.py`)
+  before merging.
 
 ## Hard rules
 - Never modify the contents of `data/raw/`. Write derived files to `data/processed/` or `results/`.
@@ -167,8 +206,11 @@ Rules:
   `gobnilp -f <file>.bnsl -s tools/gobnilp/gobnilp.set`. Score files need the header added by
   `scripts/add_bnsl_header.sh` (variable-names line + `SCORES START`).
 
-## Key references (in Anika's project, not in the repo)
+## Key references
+Full citations in `docs/references.md`; one-page notes in `docs/reading-notes/`; PDFs in the
+git-ignored `papers/`.
 - Vomlel, Kybernetika 62(3) 2026 — two-stage STD/MLR/OLR baseline (Table 2 = published model).
 - de Campos et al., Artificial Intelligence 2018 — entropy-based pruning for BIC.
+- de Campos & Ji, JMLR 12 (2011) — the classic BIC pruning bound (Theorem 4) used by scoring2a.
 - Vomlel, Kratochvíl & Kratochvíl, IJAR 161 (2023) — mixed noisy-OR BNs; Algorithm 2 is the
   joint-scoring template; Sec. 5 documents failed pruning attempts and the open problem.

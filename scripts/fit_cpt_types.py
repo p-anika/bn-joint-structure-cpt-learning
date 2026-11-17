@@ -2,17 +2,17 @@
 
 Inputs:  data/raw/BN-data.csv, a learned structure, the variable-names file.
          The structure is either a GOBNILP console log (--structure gobnilp, default
-         results/phase1/gobnilp-std-run.log) or a bnlearn adjacency-matrix CSV
-         (--structure hc, default results/phase1/bnlearn-hc-dag.csv).
+         results/phase-1/gobnilp-std-run.log) or a bnlearn adjacency-matrix CSV
+         (--structure hc, default results/phase-1/bnlearn-hc-dag.csv).
 Output:  a CSV with columns variable, n_parents, parents, bic_std, bic_mlr, bic_olr,
          mlr_converged, olr_converged, winner. Default:
-         results/phase1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv (gobnilp) or
-         results/phase1.5/1.5.2-hc-vs-table2/cpt-type-summary-hc.csv (hc).
+         results/phase-1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv (gobnilp) or
+         results/phase-1.5/1.5.2-hc-vs-table2/cpt-type-summary-hc.csv (hc).
          The console output lists the split and every fit that did not converge.
 Run:     python scripts/fit_cpt_types.py                       (GOBNILP structure)
          python scripts/fit_cpt_types.py --structure hc        (hill-climbing structure)
          python scripts/fit_cpt_types.py --structure gobnilp --structure-file other.log --out x.csv
-         (normally via `make phase1.5`)
+         (normally via `make phase-1.5`)
 
 The math (including the 1e-6 tie rule) is in `bnjoint.cpt_scores`; reading structures in
 `bnjoint.gobnilp_io` and `bnjoint.structures`. Walkthrough: docs/code-guide/cpt-scoring.md.

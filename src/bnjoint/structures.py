@@ -3,7 +3,7 @@ published reference table.
 
 Inputs:
   - an adjacency-matrix CSV written by R's `write.csv(amat(dag))`, e.g.
-    `results/phase1/bnlearn-hc-dag.csv` (made by `R/bnlearn_hc.R`). Row = parent,
+    `results/phase-1/bnlearn-hc-dag.csv` (made by `R/bnlearn_hc.R`). Row = parent,
     column = child, 1 = arc, first column = the row names.
   - a reference table typed in from a paper, e.g. `data/reference/kybernetika-table2.csv`
     (columns variable, n_parents, parents separated by ";", cpt_type).

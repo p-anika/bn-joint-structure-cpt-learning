@@ -1,7 +1,7 @@
 """Read the learned network out of a GOBNILP console log.
 
 Input:  a log saved with `gobnilp -f file.bnsl -s tools/gobnilp/gobnilp.set | tee <log>`,
-        e.g. `results/phase1/gobnilp-std-run.log`.
+        e.g. `results/phase-1/gobnilp-std-run.log`.
 Output: a dict {child: [parents]} for every variable.
 
 Why the log and not `bi.mat`: this GOBNILP version ignores the `adjacencymatrix` setting in

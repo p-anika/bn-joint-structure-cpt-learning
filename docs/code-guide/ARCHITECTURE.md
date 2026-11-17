@@ -1,10 +1,10 @@
 # Architecture: how the pieces connect
 
 This is the map. Each stage has its own guide with the details:
-[phase1-pipeline.md](phase1-pipeline.md), [scoring2a.md](scoring2a.md),
+[phase-1-pipeline.md](phase-1-pipeline.md), [scoring2a.md](scoring2a.md),
 [cpt-scoring.md](cpt-scoring.md) (also covers Phase 1.5). The function-level "how" is in the docstrings.
 
-## Data flow of Phase 1 (`make phase1`)
+## Data flow of Phase 1 (`make phase-1`)
 
 ```mermaid
 flowchart TD
@@ -16,24 +16,24 @@ flowchart TD
     hdr["scripts/add_bnsl_header.sh"]
     bnsl["data/processed/bn-data-44-bic-fixed.bnsl"]
     gob["gobnilp -f … -s tools/gobnilp/gobnilp.set<br/>(built in ~/tools/gobnilp)"]
-    log["results/phase1/gobnilp-std-run.log<br/>+ adjmat.* / pdagadjmat.*"]
+    log["results/phase-1/gobnilp-std-run.log<br/>+ adjmat.* / pdagadjmat.*"]
     hc["R/bnlearn_hc.R"]
-    hcout["results/phase1/bnlearn-hc-dag.csv"]
+    hcout["results/phase-1/bnlearn-hc-dag.csv"]
 
     raw --> conv --> dat --> s2a --> scores --> hdr --> bnsl --> gob --> log
     raw --> hc --> hcout
 ```
 
-## Data flow of Phase 1.5 (`make phase1.5`)
+## Data flow of Phase 1.5 (`make phase-1.5`)
 
 ```mermaid
 flowchart TD
     raw["data/raw/BN-data.csv"]
-    log["results/phase1/gobnilp-std-run.log<br/>(read only)"]
-    hcout["results/phase1/bnlearn-hc-dag.csv<br/>(read only)"]
+    log["results/phase-1/gobnilp-std-run.log<br/>(read only)"]
+    hcout["results/phase-1/bnlearn-hc-dag.csv<br/>(read only)"]
     fit["scripts/fit_cpt_types.py --structure gobnilp | hc<br/>→ gobnilp_io / structures + cpt_scores"]
-    c151["results/phase1.5/1.5.1-gobnilp-tie-fix/<br/>cpt-type-summary.csv"]
-    c152["results/phase1.5/1.5.2-hc-vs-table2/<br/>cpt-type-summary-hc.csv"]
+    c151["results/phase-1.5/1.5.1-gobnilp-tie-fix/<br/>cpt-type-summary.csv"]
+    c152["results/phase-1.5/1.5.2-hc-vs-table2/<br/>cpt-type-summary-hc.csv"]
     t2["data/reference/kybernetika-table2.csv"]
     cmp["scripts/compare_with_table2.py<br/>→ bnjoint.structures"]
     out["…/table2-comparison.csv"]
@@ -46,7 +46,7 @@ flowchart TD
 ```
 
 The Phase 1 structures are inputs only: the Makefile reads them without listing them as
-prerequisites, so `make phase1.5` never rebuilds (rewrites) `results/phase1/` (decision 60).
+prerequisites, so `make phase-1.5` never rebuilds (rewrites) `results/phase-1/` (decision 60).
 
 In words: the data is converted to scoring2a's format; scoring2a computes the BIC of every
 candidate parent set (assuming STD tables); GOBNILP picks the best-scoring acyclic network
@@ -64,7 +64,7 @@ bnlearn's hill-climbing learns the structure the paper used, for comparison.
 | Entry points | `scripts/` (Python, Bash), `R/` | Thin: parse arguments, call the package, print a summary |
 | Other people's programs | `tools/` (source + settings); builds in `~/tools/` | Not edited; binaries not committed |
 | Tests | `tests/` | One file per module, plus regression tests on reported numbers |
-| Outputs | `results/<phase>/<experiment>/` (Phase 1: `results/phase1/`) | One folder per experiment, with a README; a superseded result is deleted and named in the report's History |
+| Outputs | `results/<phase>/<experiment>/` (Phase 1: `results/phase-1/`) | One folder per experiment, with a README; a superseded result is deleted and named in the report's History |
 | Orchestration | `Makefile` | One target per stage |
 
 ## Python modules and who uses them
@@ -79,7 +79,7 @@ bnlearn's hill-climbing learns the structure the paper used, for comparison.
 
 ## Make targets
 
-`make help` lists them. `phase1` (the structures above), `phase1.5` (CPT types with the tie
+`make help` lists them. `phase-1` (the structures above), `phase-1.5` (CPT types with the tie
 rule on both structures + the Table 2 comparison), `test-data24` (GOBNILP smoke test),
 `provenance` (Jirka's R conversion check), `scoring2a` (compile), `test`, `lint`, `format`,
 `inventory`. Make only re-runs a stage when one of its inputs changed; the dependency list of
@@ -105,7 +105,7 @@ each rule is in the `Makefile`, with comments.
   script, add a Make rule with its inputs as prerequisites, write outputs to a new
   `results/<experiment>/` folder with a README.
 - **Change a formula**: change it only in `cpt_scores.py`, run `make test`. If
-  `test_phase1_regression.py` fails, a reported number changed. Find out why first; if the
+  `test_regression.py` fails, a reported number changed. Find out why first; if the
   change is right, it needs a decision log entry, a new results folder and a History line in the
   report that reported the number (CLAUDE.md).
 - **Move a file**: `git mv`, update `config.py`/Makefile paths, update the folder READMEs, run

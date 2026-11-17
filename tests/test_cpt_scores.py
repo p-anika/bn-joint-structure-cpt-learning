@@ -86,7 +86,7 @@ def test_mlr_no_parents_equals_std_no_parents() -> None:
 
 
 # ---------------------------------------------------------------- MLR = STD for 0 and 1 parents
-# Why they must agree: docs/explainers/04-one-parent-mlr-equals-std.md. With 0 or 1 parents,
+# Why they must agree: docs/explainers/one-parent-mlr-equals-std.md. With 0 or 1 parents,
 # MLR has exactly as many free parameters as STD and can represent every table STD can, so the
 # maximized log-likelihoods are equal (up to the optimizer's rounding) and so are the BICs.
 
@@ -98,7 +98,8 @@ def test_mlr_one_parent_equals_std_synthetic() -> None:
     # child depends on the parent, so the test is not just "both are the marginal"
     y = np.where(rng.random(300) < 0.6, x, rng.choice([-1, 0, 1], size=300))
     df = pd.DataFrame({"x": x, "y": y})
-    assert (pd.crosstab(df["x"], df["y"]) > 0).all().all()  # no empty cell (see explainer 04)
+    # no empty (parent, child) cell (lemma condition): docs/theory/one-parent-mlr-equals-std.md
+    assert (pd.crosstab(df["x"], df["y"]) > 0).all().all()
     w = cs.penalty_weight(len(df))
     assert cs.n_params_mlr(1) == cs.n_params_std(1)
     assert cs.bic_mlr(df, "y", ["x"], k=3, w=w) == pytest.approx(

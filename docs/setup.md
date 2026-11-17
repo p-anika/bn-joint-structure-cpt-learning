@@ -20,7 +20,7 @@ re-run, it says so.
 | R | 4.5.2 (2025-10-31) | `R --version` |
 | R packages | bnlearn 5.2.1, nnet 7.3.21, MASS 7.3.66, qgraph 1.10.1 | `packageVersion()` |
 | C/C++ compiler | g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0 | `g++ --version` |
-| SCIP Optimization Suite | 10.0.3 (SCIP 10.0.3, SoPlex 8.0.3) | first lines of `results/phase1/gobnilp-std-run.log` |
+| SCIP Optimization Suite | 10.0.3 (SCIP 10.0.3, SoPlex 8.0.3) | first lines of `results/phase-1/gobnilp-std-run.log` |
 | GOBNILP | git commit `5441edf` of `bitbucket.org/jamescussens/gobnilp` ("GitHash: unknown" in its own banner), built in `~/tools/gobnilp/` | `git -C ~/tools/gobnilp log -1` |
 
 Jirka's own GOBNILP setup is the much older GOBNILP 1.6.3 with SCIP 3.2.1. We don't need
@@ -114,7 +114,7 @@ make scoring2a                 # runs: g++ -O2 -o tools/scoring2a/scoring2a tool
 tools/scoring2a/scoring2a      # with no arguments it prints its usage message
 ```
 
-The compiled program is not committed (no binaries in git); `make phase1` builds it if it is
+The compiled program is not committed (no binaries in git); `make phase-1` builds it if it is
 missing. The compiler prints `-Wunused-result` warnings about `fscanf`; they are harmless.
 
 How it is run (from `scoring-how-to-use-it.txt` and Jirka's `script-data24-1`):
@@ -202,7 +202,7 @@ gobnilp -f <file>.bnsl -s tools/gobnilp/gobnilp.set
 - GOBNILP also writes `adjmat.txt`/`.dot` and `pdagadjmat.txt`/`.dot` (the DAG and its CPDAG;
   row = parent, column = child) into the folder it is run from. The Makefile runs it inside the
   results folder for that reason.
-- Easiest: `make test-data24` (5 seconds) and `make phase1`.
+- Easiest: `make test-data24` (5 seconds) and `make phase-1`.
 
 ## 8. The `.bnsl` header GOBNILP needs
 
@@ -249,5 +249,5 @@ which gobnilp && readlink -f $(which gobnilp)           # ~/tools/gobnilp/bin/go
 Rscript -e 'library(bnlearn)'               # no error
 make test                                   # all tests pass
 make test-data24                            # objective value -3411.597651
-make -B phase1 PROCESSED=scratch/p OUT=scratch/r   # from scratch, ~15 min: objective value -64837.738627
+make -B phase-1 PROCESSED=scratch/p OUT=scratch/r   # from scratch, ~15 min: objective value -64837.738627
 ```

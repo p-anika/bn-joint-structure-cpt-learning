@@ -1,10 +1,10 @@
-# Code guide: the Phase 1 pipeline (`make phase1`)
+# Code guide: the Phase 1 pipeline (`make phase-1`)
 
 **What it does.** Reproduces the Phase 1 two-stage baseline from `data/raw/BN-data.csv`:
 (1) the exact BIC-optimal structure with STD tables (scoring2a + GOBNILP), (2) the best CPT
 type per node on that structure, (3) the bnlearn hill-climbing structure for comparison.
-`make phase1` runs stages 1–4 and 6; stage 5 is `make phase1.5`, which writes to
-`results/phase1.5/`.
+`make phase-1` runs stages 1–4 and 6; stage 5 is `make phase-1.5`, which writes to
+`results/phase-1.5/`.
 Results and their interpretation: [`docs/reports/phase-1.md`](../reports/phase-1.md).
 
 ## Data flow, stage by stage
@@ -20,20 +20,20 @@ The Make rules are in the `Makefile` under "Phase 1"; their numbers match these.
    [scoring2a.md](scoring2a.md). Argument meanings: `docs/setup.md` §6.
 3. **Header** — `scripts/add_bnsl_header.sh` puts the variable names and `SCORES START` in
    front, giving `bn-data-44-bic-fixed.bnsl` (why: `docs/setup.md` §8).
-4. **Search** — `gobnilp -f …bnsl -s tools/gobnilp/gobnilp.set`, run inside `results/phase1/`.
+4. **Search** — `gobnilp -f …bnsl -s tools/gobnilp/gobnilp.set`, run inside `results/phase-1/`.
    GOBNILP turns "pick one parent set per variable, total score as high as possible, no
    cycles" into an integer linear program and solves it exactly with SCIP. The console output
    is saved as `gobnilp-std-run.log` (via `tee`, which shows output on screen and writes it to
    a file at once). GOBNILP also writes `adjmat.txt`/`.dot` (the DAG) and `pdagadjmat.txt`/`.dot`
    (its CPDAG) into the folder it runs in; in the matrices, row = parent and column = child.
-5. **CPT types** — now `make phase1.5`: `scripts/fit_cpt_types.py` reads the parent sets from
+5. **CPT types** — now `make phase-1.5`: `scripts/fit_cpt_types.py` reads the parent sets from
    the log (`bnjoint.gobnilp_io.parse_parent_sets`), fits STD, MLR and OLR per node with the
    tie rule (`bnjoint.cpt_scores.fit_cpt_types`; guide: [cpt-scoring.md](cpt-scoring.md)) and
-   writes `results/phase1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv`.
+   writes `results/phase-1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv`.
 6. **hc** — `Rscript R/bnlearn_hc.R`: bnlearn `hc(score = "bic")` with `set.seed(1)`; writes the
    adjacency matrix `bnlearn-hc-dag.csv`.
 
-The final line `make phase1` prints is GOBNILP's `objective value`; for Phase 1 it is
+The final line `make phase-1` prints is GOBNILP's `objective value`; for Phase 1 it is
 −64837.738627.
 
 ## Why it is designed this way
@@ -51,14 +51,14 @@ The final line `make phase1` prints is GOBNILP's `objective value`; for Phase 1 
 
 ```bash
 source .venv/bin/activate
-make phase1                       # does only what is out of date
-make phase1.5                     # CPT types (stage 5) on both structures + Table 2 check
-make -B phase1                    # force everything (~20 min)
-make phase1 PROCESSED=/tmp/p OUT=/tmp/r   # rebuild elsewhere, leaving committed files alone
+make phase-1                       # does only what is out of date
+make phase-1.5                     # CPT types (stage 5) on both structures + Table 2 check
+make -B phase-1                    # force everything (~20 min)
+make phase-1 PROCESSED=/tmp/p OUT=/tmp/r   # rebuild elsewhere, leaving committed files alone
 make test-data24                  # 5-second GOBNILP check on Jirka's small example
 ```
 
-A forced run rewrites `results/phase1/gobnilp-std-run.log`. Its timing numbers always differ
+A forced run rewrites `results/phase-1/gobnilp-std-run.log`. Its timing numbers always differ
 from run to run; check that the objective and the `child:-{…}` lines are unchanged
 (`git diff`), and don't commit a log whose only change is timings.
 

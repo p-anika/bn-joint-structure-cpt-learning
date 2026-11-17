@@ -25,9 +25,9 @@ make test-data24     # GOBNILP works: objective value -3411.597651
 
 | Phase | Command | Output | Report |
 |---|---|---|---|
-| 1: two-stage baseline structures (exact GOBNILP structure, hc comparison) | `make phase1` (~20 min from scratch; prints `objective value -64837.738627`). Rewrites the reported `results/phase1/` files, so for a check run it into scratch: `make -B phase1 PROCESSED=scratch/p OUT=scratch/r` | `results/phase1/` | [`docs/reports/phase-1.md`](docs/reports/phase-1.md) |
-| 1.5.1–1.5.2: CPT types with the tie rule on the GOBNILP and hc structures; hc vs. the paper's Table 2 | `make phase1.5` (~10 s; prints 16/24/4 for GOBNILP and 19/22/3 with 44/44 nodes matching Table 2) | `results/phase1.5/` | [`docs/reports/1.5.1-1.5.2.md`](docs/reports/1.5.1-1.5.2.md) |
-| later steps | added as each step is done | | `docs/reports/` |
+| 1: two-stage baseline structures (exact GOBNILP structure, hc comparison) | `make phase-1` (~20 min from scratch; prints `objective value -64837.738627`). Rewrites the reported `results/phase-1/` files, so for a check run it into scratch: `make -B phase-1 PROCESSED=scratch/p OUT=scratch/r` | `results/phase-1/` | [`docs/reports/phase-1.md`](docs/reports/phase-1.md) |
+| 1.5: checking the baseline (data provenance, tie rule, CPT types on the GOBNILP and hc structures, hc vs. the paper's Table 2) | `make phase-1.5` (~10 s; prints 16/24/4 for GOBNILP and 19/22/3 with 44/44 nodes matching Table 2) | `results/phase-1.5/` | [`docs/reports/phase-1.5.md`](docs/reports/phase-1.5.md) |
+| later phases | added as each phase starts | | `docs/reports/phase-<n>.md` |
 
 `make help` lists all targets. Other checks: `make provenance` (Jirka's R code reproduces
 `BN-data.csv`), `make lint`, `make inventory` (every tracked file is documented).
@@ -43,7 +43,7 @@ make test-data24     # GOBNILP works: objective value -3411.597651
 | [`tools/`](tools/README.md) | scoring2a source and GOBNILP settings (builds live outside the repo) |
 | [`tests/`](tests/README.md) | pytest tests |
 | [`results/`](results/README.md) | One folder per experiment |
-| [`docs/`](docs/README.md) | Plan, setup, logs, code guides, explainers, reports, paper material |
+| [`docs/`](docs/README.md) | Plan, setup, glossary, logs, code guides, explainers, reports, theory, reading notes, paper material ([which document does what](docs/README.md#which-document-does-what)) |
 
 Files in this folder:
 
@@ -63,5 +63,6 @@ Not in git: `.venv/` (Python environment), `scratch/` (throwaway outputs such as
 `papers/` (local PDF copies of papers; never commit them, citations are in
 [`docs/references.md`](docs/references.md)).
 
-Start here if you are new: [`docs/code-guide/ARCHITECTURE.md`](docs/code-guide/ARCHITECTURE.md),
-then [`docs/explainers/README.md`](docs/explainers/README.md).
+Start here if you are new: the [glossary](docs/glossary.md), then
+[`docs/code-guide/ARCHITECTURE.md`](docs/code-guide/ARCHITECTURE.md), then
+[`docs/explainers/README.md`](docs/explainers/README.md).

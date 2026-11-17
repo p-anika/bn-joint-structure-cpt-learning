@@ -1,9 +1,11 @@
-# 00. The repo's tools: Make, a Python package, tests, ruff, line endings, checksums
+# The repo's tools: Make, a Python package, tests, ruff, line endings, checksums
+
+Terms used here (one-line definitions in the glossary): [GOBNILP](../glossary.md#gobnilp), [scoring2a](../glossary.md#scoring2a), [CPT](../glossary.md#cpt), [STD](../glossary.md#std), [MLR](../glossary.md#mlr), [OLR](../glossary.md#olr).
 
 ## 1. Plain-words definitions
 
 - **Make** reads a `Makefile` of *rules*: "to build this file, these files must exist first,
-  then run these commands". Typing `make phase1` builds everything Phase 1 needs, in the right
+  then run these commands". Typing `make phase-1` builds everything Phase 1 needs, in the right
   order, and skips steps whose inputs haven't changed.
 - **A Python package** is a folder of `.py` files with an `__init__.py`, which other code can
   `import`. Ours is `src/bnjoint/`. An **editable install** (`pip install -e .`) tells Python
@@ -21,7 +23,7 @@
 
 ## 2. Why it matters here
 
-- Two commands (`make phase1`, then `make phase1.5`) reproduce every Phase 1 and 1.5 number, so
+- Two commands (`make phase-1`, then `make phase-1.5`) reproduce every Phase 1 and 1.5 number, so
   anyone, including Jirka, can check them.
 - The STD/MLR/OLR math is used again in every later phase; as a tested package, it can't
   silently drift.
@@ -31,7 +33,7 @@
 
 ## 3. Worked example with our data
 
-- `make phase1` on a fresh checkout: Make sees that `results/phase1/gobnilp-std-run.log` needs
+- `make phase-1` on a fresh checkout: Make sees that `results/phase-1/gobnilp-std-run.log` needs
   `bn-data-44-bic-fixed.bnsl`, which needs `bn-data-44-bic.scores`, which needs
   `bn-data-44.dat` (and the scoring2a program), which needs `data/raw/BN-data.csv`. It runs
   those steps in that order. Run it again and it does nothing, because every output is newer
@@ -40,8 +42,8 @@
   `e8a1aeb11d0709e81cdbd8d6ed6315b8bb8d644fa4a305254aab3aa62c0891d7`. Jirka's R code
   reproduces it byte for byte only if written with `eol = "\r\n"`; written with LF, every value
   is the same but the checksum differs.
-- `tests/test_phase1_regression.py` refits all 44 nodes on both structures and compares the
-  results with the committed CSVs in `results/phase1.5/` byte for byte, every digit equal.
+- `tests/test_regression.py` refits all 44 nodes on both structures and compares the
+  results with the committed CSVs in `results/phase-1.5/` byte for byte, every digit equal.
 
 ## 4. Where it appears in the code
 
@@ -62,18 +64,18 @@ Architecture: `docs/code-guide/ARCHITECTURE.md`.
 
 ## 6. Check your understanding
 
-1. You edit `src/bnjoint/cpt_scores.py`. What do `make phase1` and `make phase1.5` re-run?
+1. You edit `src/bnjoint/cpt_scores.py`. What do `make phase-1` and `make phase-1.5` re-run?
 2. Why is `data/raw/** -text` in `.gitattributes`?
 3. A colleague's copy of `BN-data.csv` has a different SHA-256 from ours. Does that mean the
    data values differ?
 4. Why is `scripts/fit_cpt_types.py` so short?
-5. What would happen if `tests/test_phase1_regression.py` failed after a change?
+5. What would happen if `tests/test_regression.py` failed after a change?
 
 ---
 
 **Answers.**
-1. `make phase1` re-runs nothing: scoring, GOBNILP and hc don't depend on `cpt_scores.py`.
-   `make phase1.5` re-runs both CPT-type fits (and the Table 2 comparison), because their CSVs
+1. `make phase-1` re-runs nothing: scoring, GOBNILP and hc don't depend on `cpt_scores.py`.
+   `make phase-1.5` re-runs both CPT-type fits (and the Table 2 comparison), because their CSVs
    list `cpt_scores.py` as a prerequisite.
 2. So git never converts the CRLF line endings of Jirka's originals; converting them would
    change the bytes and the checksums.

@@ -2,7 +2,7 @@
 # Add the two header lines this GOBNILP version needs in front of a scoring2a .scores file.
 #
 # Usage:  scripts/add_bnsl_header.sh input.scores output.bnsl var1 var2 var3 ...
-# Example (what `make phase1` runs):
+# Example (what `make phase-1` runs):
 #   scripts/add_bnsl_header.sh data/processed/bn-data-44-bic.scores \
 #       data/processed/bn-data-44-bic-fixed.bnsl $(cat data/processed/bn-data-44-varnames.txt)
 #

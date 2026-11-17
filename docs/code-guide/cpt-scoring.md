@@ -4,9 +4,9 @@
 node, the BIC of three ways of writing its conditional probability table (CPT) and picks the
 best. In Phase 1 this is the second stage of the two-stage method; from Phase 2 on the same
 functions score candidate parent sets for joint learning. Entry point:
-`scripts/fit_cpt_types.py --structure gobnilp|hc` → `results/phase1.5/<step>-…/cpt-type-summary*.csv`
-(`make phase1.5`). Concepts: explainers [03](../explainers/03-cpt-types.md) (the three types) and
-[04](../explainers/04-one-parent-mlr-equals-std.md) (why 1-parent MLR = STD, and the tie rule).
+`scripts/fit_cpt_types.py --structure gobnilp|hc` → `results/phase-1.5/<step>-…/cpt-type-summary*.csv`
+(`make phase-1.5`). Concepts: explainers [cpt-types](../explainers/cpt-types.md) (the three types) and
+[one-parent-mlr-equals-std](../explainers/one-parent-mlr-equals-std.md) (why 1-parent MLR = STD, and the tie rule).
 
 ## Data flow
 
@@ -60,9 +60,9 @@ All functions have docstrings with the formulas and an example; this is the over
   Alternatives (scikit-learn) add regularization by default, which would change the BIC.
 - **Failed fits become −∞** and print a message, so a failure can never silently win.
 - **The STD summation order is kept exactly as in Phase 1**, so floating-point results are
-  bit-for-bit the same (checked by `tests/test_phase1_regression.py`).
+  bit-for-bit the same (checked by `tests/test_regression.py`).
 - **Tie rule with a tolerance** rather than `max`: two types that are the same model must not
-  be separated by rounding noise (explainer 04). Rejected: rounding scores before comparing
+  be separated by rounding noise (explainer `one-parent-mlr-equals-std.md`). Rejected: rounding scores before comparing
   (rounding can still split two near-equal numbers across a boundary, e.g. 0.49999 vs 0.50001).
 - **Convergence flags in the CSV** rather than only a printed warning: the flag stays next to
   the number it qualifies, and a test (`test_all_fits_converged`) fails if any fit stops
@@ -81,13 +81,13 @@ All functions have docstrings with the formulas and an example; this is the over
 ## How to run and change it
 
 ```bash
-make phase1.5                                              # both structures + Table 2 comparison
+make phase-1.5                                              # both structures + Table 2 comparison
 python scripts/fit_cpt_types.py --structure hc --out /tmp/x.csv   # one structure, elsewhere
 python scripts/fit_cpt_types.py --structure gobnilp --structure-file other.log --out other.csv
 ```
 
 See `--help`. To change a formula, change it here only and run `make test`.
-`tests/test_phase1_regression.py` then tells you whether a reported number moved (the Phase 1
+`tests/test_regression.py` then tells you whether a reported number moved (the Phase 1
 BIC columns, the 1.5.1 and 1.5.2 CSVs, or the match with Table 2); a moved number needs a
 decision log entry, a new results folder and a History line in the report, never an edited CSV. To change the tie
 tolerance or order, edit `config.py` only.

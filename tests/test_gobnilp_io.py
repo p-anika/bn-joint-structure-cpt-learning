@@ -1,6 +1,6 @@
 """Tests for `bnjoint.gobnilp_io`: reading learned parent sets out of a GOBNILP console log.
 
-The sample lines are copied from `results/phase1/gobnilp-std-run.log`.
+The sample lines are copied from `results/phase-1/gobnilp-std-run.log`.
 """
 
 import pytest
@@ -40,7 +40,7 @@ def test_unknown_variable_in_log_raises() -> None:
         parse_parent_sets(SAMPLE_LOG, ["a1", "a3"])
 
 
-def test_phase1_log_has_69_arcs() -> None:
+def test_gobnilp_log_has_69_arcs() -> None:
     """The Phase 1 structure has 44 families and 69 arcs (docs/reports/phase-1.md)."""
     text = config.PHASE1_GOBNILP_LOG.read_text()
     varnames = config.VARNAMES_FILE.read_text().split()

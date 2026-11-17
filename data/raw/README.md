@@ -7,7 +7,7 @@ and converting those would change the files and their checksums.
 
 To check that a file is unchanged: `sha256sum data/raw/<file>` and compare with the table.
 A SHA-256 checksum is a 64-character fingerprint of a file's bytes; changing even one byte
-gives a completely different checksum (explainer `docs/explainers/00-repo-tools.md`).
+gives a completely different checksum (explainer `docs/explainers/repo-tools.md`).
 
 | File | What it is | From | Line endings | SHA-256 |
 |---|---|---|---|---|
@@ -22,7 +22,7 @@ Jirka's Aug 5, 2026 email gives the R code that turns `preprocessed-data.csv` in
 `BN-data.csv`: keep columns 29–72, then map answers 1–3 → −1, 4 → 0, 5–7 → +1. His code is
 saved verbatim in [`R/convert_jirka_aug5.R`](../../R/convert_jirka_aug5.R). Re-running it
 (`make provenance`) gives a file **byte-identical** to `BN-data.csv` (2026-11-15; details in
-`docs/reports/1.5.0b.md`). In the same email Jirka wrote that it is better to use `BN-data.csv`
+`docs/reports/phase-1.5.md` §1.5.0). In the same email Jirka wrote that it is better to use `BN-data.csv`
 directly, so that we both work with identical data, and that is what all our code does
 (decision log entry 2).
 

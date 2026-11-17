@@ -24,15 +24,16 @@ script's comments. Coding choices are decision log entries 7-9.
 Winner rule (`pick_winner`, step 1.5.1): the highest BIC wins, but scores within
 `config.TIE_TOLERANCE` = 1e-6 of the best count as tied, and a tie goes to the simplest type:
 STD, then OLR, then MLR (`config.TIE_ORDER`). Why: with 0 or 1 parents MLR and STD are the SAME
-model (docs/explainers/04-one-parent-mlr-equals-std.md), so their BICs differ only by rounding
-(~1e-13). The Phase 1 rule had no tolerance and let MLR win 6 such ties at random.
+model (docs/explainers/one-parent-mlr-equals-std.md), so their BICs differ only by rounding
+(~1e-13). Without a tolerance, rounding decides such ties (it did in Phase 1:
+docs/reports/phase-1.md, "What we tried that didn't work").
 
 Convergence: MLR and OLR are fitted by iterative optimizers. Each fit records whether its
 optimizer reported convergence (statsmodels `mle_retvals["converged"]`); a fit that did not
 converge may have a too-low log-likelihood, so its BIC would be unreliable. `fit_cpt_types`
 writes the flags into the output CSV and `scripts/fit_cpt_types.py` prints any failures.
 
-Run the whole fit: `python scripts/fit_cpt_types.py [--structure hc]` (or `make phase1.5`).
+Run the whole fit: `python scripts/fit_cpt_types.py [--structure hc]` (or `make phase-1.5`).
 """
 
 import warnings

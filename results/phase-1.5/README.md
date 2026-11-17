@@ -1,7 +1,7 @@
-# results/phase1.5/: Phase 1.5 experiments
+# results/phase-1.5/: Phase 1.5 experiments
 
-One subfolder per experiment, named `<step>-<experiment>`. Made by `make phase1.5`.
-Write-up: [`docs/reports/1.5.1-1.5.2.md`](../../docs/reports/1.5.1-1.5.2.md).
+One subfolder per experiment, named `<step>-<experiment>`. Made by `make phase-1.5`.
+Write-up: [`docs/reports/phase-1.5.md`](../../docs/reports/phase-1.5.md).
 
 | Folder | Experiment |
 |---|---|

@@ -1,6 +1,10 @@
-# 04 — Why one-parent MLR and STD are the same model (and why we need a tie rule)
+# Why one-parent MLR and STD are the same model (and why we need a tie rule)
 
-Prerequisite: [03 — the three CPT types](03-cpt-types.md).
+Prerequisite: [the three CPT types](cpt-types.md). The formal statement and proof are in
+[docs/theory/one-parent-mlr-equals-std.md](../theory/one-parent-mlr-equals-std.md); this
+explainer gives the intuition and a worked example.
+
+Terms used here (one-line definitions in the glossary): [STD](../glossary.md#std), [MLR](../glossary.md#mlr), [OLR](../glossary.md#olr), [BIC](../glossary.md#bic), [log-likelihood](../glossary.md#log-likelihood), [free parameter](../glossary.md#free-parameter), [dummy coding](../glossary.md#dummy-coding), [reference state](../glossary.md#reference-state), [tie rule](../glossary.md#tie-rule), [convergence](../glossary.md#convergence).
 
 ## 1. Plain-words definition
 
@@ -40,7 +44,7 @@ parents. Then MLR is a genuinely smaller model.
   "won", giving 10 STD / 30 MLR / 4 OLR instead of 16 / 24 / 4. The fix: scores within 1e-6 are
   treated as equal, and ties go to the simplest type (STD, then OLR, then MLR). See the
   [Phase 1 report](../reports/phase-1.md#what-we-tried-that-didnt-work) and
-  [`docs/reports/1.5.1-1.5.2.md`](../reports/1.5.1-1.5.2.md).
+  [`docs/reports/phase-1.5.md`](../reports/phase-1.5.md).
 - **Joint scoring (Phase 2).** For every candidate parent set of size 0 or 1, computing MLR is
   wasted work: its score is known to equal STD's. That is a first, trivially safe saving.
 - **The paper.** It is a small lemma worth stating: it explains why the published model has
@@ -74,7 +78,7 @@ The optimizer found exactly the coefficients the argument predicts, so MLR's fit
 probabilities are the relative frequencies, and LL_MLR = −1120.26278 = LL_STD.
 
 Both have 6 parameters, penalty 6 × log(1661)/2 = 22.24553, so
-BIC_STD = BIC_MLR = **−1142.50831** (in `results/phase1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv`
+BIC_STD = BIC_MLR = **−1142.50831** (in `results/phase-1.5/1.5.1-gobnilp-tie-fix/cpt-type-summary.csv`
 both columns show −1142.5083085785432). Across all 0-/1-parent nodes the largest
 |BIC_STD − BIC_MLR| is 4.5e-13 (GOBNILP structure) and 6.8e-13 (hc structure).
 
@@ -104,7 +108,7 @@ both columns show −1142.5083085785432). Across all 0-/1-parent nodes the large
   non-convergence. This does not happen in our 1-parent families (checked: no zero cells in any
   of them, in either structure), but it can happen in Phase 2 with other parent sets.
 - **"So MLR and OLR are the same for one parent too?"** No. OLR has only 3 parameters with one
-  parent; it is a genuinely restricted model (it won d7 | a27, explainer 03).
+  parent; it is a genuinely restricted model (it won d7 | a27; see [the CPT-types explainer](cpt-types.md)).
 
 ## 6. Check your understanding
 

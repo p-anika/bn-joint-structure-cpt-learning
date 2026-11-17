@@ -15,4 +15,4 @@ differ, and the rebuilt file has the same SHA-256 as `data/raw/BN-data.csv`:
 | `scratch/provenance/BN-data-from-jirka-code.csv` (rebuilt) | `e8a1aeb11d0709e81cdbd8d6ed6315b8bb8d644fa4a305254aab3aa62c0891d7` |
 | `data/raw/BN-data.csv` (Jirka's original) | `e8a1aeb11d0709e81cdbd8d6ed6315b8bb8d644fa4a305254aab3aa62c0891d7` |
 
-Details: `docs/reports/1.5.0b.md`.
+Details: `docs/reports/infrastructure.md`.

@@ -2,7 +2,7 @@
 
 Inputs:  `data/raw/BN-data.csv` (44 columns a1-a30, d1-d14; values -1, 0, 1; 1661 rows).
 Outputs: `data/processed/bn-data-44.dat` and `data/processed/bn-data-44-varnames.txt`.
-Run:     `python scripts/convert_data.py` (or `make phase1`, which calls it).
+Run:     `python scripts/convert_data.py` (or `make phase-1`, which calls it).
 
 The `.dat` format read by de Campos's scoring2a (see `docs/code-guide/scoring2a.md`):
 

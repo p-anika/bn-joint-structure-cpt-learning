@@ -1,4 +1,0 @@
-Structure (hc) from results/phase1/bnlearn-hc-dag.csv: 44 nodes, 66 arcs
-MLR fits converged: 44/44
-OLR fits converged: 43/43 (nodes without parents not fitted)
-Wrote results/phase1.5/1.5.2-hc-vs-table2/cpt-type-summary-hc.csv: STD 19, MLR 22, OLR 3

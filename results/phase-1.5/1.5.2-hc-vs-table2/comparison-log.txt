@@ -1,4 +1,4 @@
 Split STD/MLR/OLR: ours 19/22/3, reference 19/22/3
 Same parent set: 44/44 nodes
 Same CPT type:   44/44 nodes
-Wrote results/phase1.5/1.5.2-hc-vs-table2/table2-comparison.csv
+Wrote results/phase-1.5/1.5.2-hc-vs-table2/table2-comparison.csv
