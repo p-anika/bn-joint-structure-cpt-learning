@@ -4,6 +4,23 @@ Status: **draft** (written by Claude, 2026-11-16; to be checked by Anika, then J
 and a worked example from our data: [explainer](../explainers/one-parent-mlr-equals-std.md).
 Notation follows [vomlel2026](../references.md#vomlel2026), Sec. 2–3.
 
+## Novelty: a known fact, not a new result
+
+This is a special case of a standard result in statistics: a *saturated* model, one with a free
+parameter for every probability it must estimate, reproduces the observed relative
+frequencies. Multinomial logistic regression with one fully dummy-coded categorical predictor
+is saturated in this sense, so its maximum-likelihood fit equals the STD table. The statement
+and proof below were written for this project (first noticed by Anika in Phase 1, written out
+by Claude), not taken from a source, but the fact itself is not new.
+
+- **In the paper:** present it as a remark or observation with a textbook reference, not as a
+  contribution. It explains why Table 2 has STD on every 1-parent node, why CPT types need a tie
+  rule, and why joint scoring can skip fitting MLR for parent sets of size 0 or 1.
+- **Reference to be found and verified:** textbooks on categorical data analysis treat saturated
+  logit and log-linear models (e.g. Agresti, *Categorical Data Analysis*), but no specific
+  passage has been checked yet. Find it before citing, and add it to `docs/references.md`.
+  Jirka may know a standard reference.
+
 ## Setting
 
 Let X_v be a child variable with k ≥ 2 states {1, …, k}, state 1 being the reference state. Let it
